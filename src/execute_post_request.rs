@@ -29,11 +29,17 @@ pub async fn execute_post_request(app: &AppContext, ssh: &str, post_request: &Po
 
 async fn get_body(app: &AppContext, model: &PostDataModel) -> String {
     if let Some(body) = model.body.as_ref() {
+        if model.raw_content() {
+            return body.clone();
+        }
         return crate::scripts::populate_for_post_request(app, body.clone()).await;
     }
 
     if let Some(body_path) = model.body_path.as_ref() {
         let content = crate::scripts::load_file(app, body_path, false).await;
+        if model.raw_content() {
+            return content;
+        }
         return crate::scripts::populate_for_post_request(app, content).await;
     }
 

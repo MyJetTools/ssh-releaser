@@ -33,6 +33,13 @@ pub struct PostDataModel {
     pub body_path: Option<String>,
     pub body: Option<String>,
     pub headers: Option<HashMap<String, String>>,
+    raw_content: Option<bool>,
+}
+
+impl PostDataModel {
+    pub fn raw_content(&self) -> bool {
+        self.raw_content.unwrap_or(false)
+    }
 }
 
 pub enum RemoteCommandType {
