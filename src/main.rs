@@ -2,6 +2,7 @@ use settings::SettingsModel;
 
 mod app;
 mod execute_commands;
+mod execute_get_request;
 mod execute_post_request;
 mod http_over_ssh;
 mod scripts;
@@ -42,6 +43,10 @@ async fn main() {
 
                 settings::RemoteCommandType::PostRequest { ssh, data } => {
                     execute_post_request::execute_post_request(&app, &ssh, &data).await;
+                }
+
+                settings::RemoteCommandType::GetRequest { ssh, data } => {
+                    execute_get_request::execute_get_request(&app, &ssh, &data).await;
                 }
             }
         }

@@ -68,4 +68,31 @@ impl Http1Client {
             .unwrap();
         Ok(result.status().as_u16())
     }
+
+    pub async fn get(
+        &self,
+        uri: Uri,
+        headers: &Option<HashMap<String, String>>,
+    ) -> Result<u16, HttpClientError> {
+        let body = http_body_util::Full::new(vec![].into());
+        let mut request = Request::builder().uri(uri).method(Method::GET);
+
+        if let Some(headers) = headers {
+            for (k, v) in headers {
+                request = request.header(k, v);
+            }
+        }
+
+        let request = request.body(body).unwrap();
+
+        let mut send_request = self.send_request.lock().await;
+
+        let result = send_request
+            .as_mut()
+            .unwrap()
+            .send_request(request)
+            .await
+            .unwrap();
+        Ok(result.status().as_u16())
+    }
 }

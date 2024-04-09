@@ -3,7 +3,7 @@ use std::time::Duration;
 use crate::{app::AppContext, settings::UploadFileModel};
 
 pub async fn upload_file(app: &AppContext, ssh: &str, file: UploadFileModel) {
-    let content = crate::scripts::load_file(app, &file.local_path, true).await;
+    let content = crate::scripts::load_file(app, &file.local_path, !file.raw_content()).await;
 
     let session = app.get_ssh_session(ssh).await;
 

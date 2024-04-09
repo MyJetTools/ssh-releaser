@@ -10,6 +10,7 @@ pub struct RemoteCommand {
     pub commands: Option<Vec<RemoteCommandItem>>,
     pub file: Option<UploadFileModel>,
     pub post_data: Option<PostDataModel>,
+    pub get_data: Option<GetDataModel>,
     pub name: Option<String>,
 }
 
@@ -26,6 +27,13 @@ pub struct UploadFileModel {
     pub local_path: String,
     pub remote_path: String,
     pub mode: i32,
+    raw_content: Option<bool>,
+}
+
+impl UploadFileModel {
+    pub fn raw_content(&self) -> bool {
+        self.raw_content.unwrap_or(false)
+    }
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PostDataModel {
@@ -34,6 +42,12 @@ pub struct PostDataModel {
     pub body: Option<String>,
     pub headers: Option<HashMap<String, String>>,
     raw_content: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GetDataModel {
+    pub url: String,
+    pub headers: Option<HashMap<String, String>>,
 }
 
 impl PostDataModel {
@@ -56,6 +70,11 @@ pub enum RemoteCommandType {
     PostRequest {
         ssh: String,
         data: PostDataModel,
+    },
+
+    GetRequest {
+        ssh: String,
+        data: GetDataModel,
     },
 }
 
@@ -92,6 +111,16 @@ impl RemoteCommand {
                 return RemoteCommandType::PostRequest {
                     ssh: self.ssh.clone(),
                     data: self.post_data.as_ref().unwrap().clone(),
+                };
+            }
+            "http_get" => {
+                if self.get_data.is_none() {
+                    panic!("Type 'http_get' requires get_data property");
+                }
+
+                return RemoteCommandType::GetRequest {
+                    ssh: self.ssh.clone(),
+                    data: self.get_data.as_ref().unwrap().clone(),
                 };
             }
             _ => panic!("Unknown remote command type {}", self.r#type),
