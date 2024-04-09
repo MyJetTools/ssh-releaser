@@ -24,7 +24,11 @@ pub fn populate_variables<'s>(app: &AppContext, src: &'s str) -> StrOrString<'s>
                 if let Some(value) = app.release_settings.vars.get(placeholder) {
                     result.push_str(value);
                 } else {
-                    panic!("Variable {} not found", placeholder)
+                    if let Ok(value) = std::env::var(placeholder) {
+                        result.push_str(value.as_str());
+                    } else {
+                        panic!("Variable {} not found", placeholder)
+                    }
                 }
             }
         }
