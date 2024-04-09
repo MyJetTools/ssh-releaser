@@ -1,0 +1,29 @@
+[package]
+name = "ssh-releaser"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = { version = "*", features = ["full"] }
+async-trait = "*"
+serde = { version = "*", features = ["derive"] }
+
+my-settings-reader = { tag = "0.3.1", git = "https://github.com/MyJetTools/my-settings-reader.git" }
+my-ssh = { path = "../my-jet-tools/my-ssh" }
+
+rust-extensions = { tag = "0.1.4", git = "https://github.com/MyJetTools/rust-extensions.git", features = [
+    "placeholders",
+    "base64",
+    "with-tokio",
+] }
+
+
+serde_yaml = "*"
+
+
+hyper = { version = "*", features = ["full"] }
+hyper-util = { version = "*", features = ["tokio", "server", "http1", "http2"] }
+http-body-util = "*"
+bytes = "*"
