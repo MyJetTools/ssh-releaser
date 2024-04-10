@@ -13,3 +13,5 @@ ${PLACEHOLDER_NAME} after processing
 * ${/file_name} = content of placeholder is going to be taken from a file;
 * ${/file_name:url_encoded} = after reading - content is going to be url_encoded before it's going to be injected into a placeholder;
 * ${/file_name:raw} = after reading from a file - if content has placeholders inside - they are not going to be populated by variables from files;
+
+* ${/file_name:url_encoded:raw} = does not populate placeholders from variables and url encodes;

@@ -4,6 +4,8 @@ use rust_extensions::StrOrString;
 
 use crate::app::AppContext;
 
+use super::PopulateVariablesProcessing;
+
 pub const PLACEHOLDER_OPEN_TOKEN: &str = "${";
 pub const PLACEHOLDER_CLOSE_TOKEN: &str = "}";
 
@@ -23,16 +25,19 @@ pub async fn populate_variables<'s>(app: &AppContext, src: &'s str) -> StrOrStri
         match token {
             rust_extensions::placeholders::ContentToken::Text(text) => result.push_str(text),
             rust_extensions::placeholders::ContentToken::Placeholder(placeholder) => {
-                let (placeholder_to_process, encoding) = match placeholder.find(":") {
+                let (placeholder_to_process, processing) = match placeholder.find(":") {
                     Some(index) => {
                         let placeholder_to_process = &placeholder[..index];
-                        let encoding = &placeholder[index + 1..];
-                        (placeholder_to_process, encoding)
+                        let processing = PopulateVariablesProcessing::new(
+                            &placeholder[index + 1..],
+                            placeholder,
+                        );
+                        (placeholder_to_process, processing)
                     }
-                    None => (placeholder, ""),
+                    None => (placeholder, PopulateVariablesProcessing::empty()),
                 };
 
-                let populate_placeholders_after_reading_from_file = encoding != "raw";
+                let populate_placeholders_after_reading_from_file = !processing.has_raw();
 
                 let content = get_placeholder_content(
                     app,
@@ -41,20 +46,11 @@ pub async fn populate_variables<'s>(app: &AppContext, src: &'s str) -> StrOrStri
                 )
                 .await;
 
-                match encoding {
-                    "url_encoded" => {
-                        let url_encoded = convert_url_encoded(content.as_str());
-                        result.push_str(url_encoded.as_str());
-                    }
-                    "raw" => {
-                        result.push_str(content.as_str());
-                    }
-                    "" => {
-                        result.push_str(content.as_str());
-                    }
-                    _ => {
-                        panic!("Unknown url encoding for placeholder: {}", placeholder);
-                    }
+                if processing.has_url_encoded() {
+                    let url_encoded = convert_url_encoded(content.as_str());
+                    result.push_str(url_encoded.as_str());
+                } else {
+                    result.push_str(content.as_str());
                 }
             }
         }
