@@ -26,7 +26,7 @@ async fn main() {
 
         println!("Executing step: {}", step.id);
 
-        for remote_command in &step.script {
+        for remote_command in step.get_remote_commands(&app).await {
             println!("-----------------");
             if let Some(name) = remote_command.name.as_ref() {
                 println!("Executing Script step: {}", name);

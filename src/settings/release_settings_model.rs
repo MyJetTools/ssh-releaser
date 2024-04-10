@@ -26,10 +26,11 @@ impl ReleaseSettingsModel {
 
         if let Some(var_files) = release_settings.var_files.clone() {
             for var_file in var_files {
-                let vars_content = settings.get_file_name(var_file.as_str());
+                let file_name = settings.get_file_name(var_file.as_str());
 
+                let content = tokio::fs::read(file_name.as_str()).await.unwrap();
                 let external_vars: ExternalVariablesModel =
-                    serde_yaml::from_slice(vars_content.as_bytes()).unwrap();
+                    serde_yaml::from_slice(content.as_slice()).unwrap();
 
                 for (key, value) in external_vars.vars {
                     if release_settings.vars.contains_key(key.as_str()) {
