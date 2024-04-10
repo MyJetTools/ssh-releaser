@@ -17,10 +17,7 @@ async fn main() {
     let app = app::AppContext::new(my_settings.clone()).await;
 
     for step in &app.release_settings.steps {
-        let can_execute = app.release_settings.execute_step == "*"
-            || step.id == app.release_settings.execute_step;
-
-        if !can_execute {
+        if !app.release_settings.execute_me(&step.id) {
             continue;
         }
 

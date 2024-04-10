@@ -7,7 +7,7 @@ use crate::{app::AppContext, http_over_ssh::Http1Client, scripts, settings::Post
 pub async fn execute_post_request(app: &AppContext, ssh: &str, post_request: &PostDataModel) {
     let ssh_credentials = app.get_ssh_credentials(ssh);
 
-    let url = scripts::populate_variables(app, post_request.url.as_str());
+    let url = scripts::populate_variables(app, post_request.url.as_str()).await;
 
     let remote_uri = Uri::from_str(url.as_str()).unwrap();
 
@@ -32,15 +32,16 @@ async fn get_body(app: &AppContext, model: &PostDataModel) -> String {
         if model.raw_content() {
             return body.clone();
         }
-        return crate::scripts::populate_for_post_request(app, body.clone()).await;
+        return crate::scripts::populate_variables(app, body)
+            .await
+            .to_string();
     }
 
     if let Some(body_path) = model.body_path.as_ref() {
-        let content = crate::scripts::load_file(app, body_path, false).await;
+        let content = crate::scripts::load_file_and_populate_placeholders(app, body_path).await;
         if model.raw_content() {
             return content;
         }
-        return crate::scripts::populate_for_post_request(app, content).await;
     }
 
     panic!("Post request must have either 'body' or 'body_path' property");

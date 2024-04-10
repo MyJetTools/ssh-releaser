@@ -45,7 +45,7 @@ impl StepModel {
         }
 
         if let Some(from_file) = self.from_file.as_ref() {
-            let file_content = crate::scripts::load_file(app, from_file, true).await;
+            let file_content = crate::scripts::load_file(app, from_file).await;
 
             let result: ScriptFromFileModel = serde_yaml::from_str(&file_content).unwrap();
             return result.script;

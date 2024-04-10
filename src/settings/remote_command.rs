@@ -27,14 +27,8 @@ pub struct UploadFileModel {
     pub local_path: String,
     pub remote_path: String,
     pub mode: i32,
-    raw_content: Option<bool>,
 }
 
-impl UploadFileModel {
-    pub fn raw_content(&self) -> bool {
-        self.raw_content.unwrap_or(false)
-    }
-}
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PostDataModel {
     pub url: String,

@@ -11,10 +11,24 @@ pub struct ReleaseSettingsModel {
     pub var_files: Option<Vec<String>>,
     pub ssh: Vec<SshConfig>,
     pub steps: Vec<StepModel>,
-    pub execute_step: String,
+    pub execute_steps: Vec<String>,
 }
 
 impl ReleaseSettingsModel {
+    pub fn execute_me(&self, id: &str) -> bool {
+        for execute_step in self.execute_steps.iter() {
+            if execute_step == "*" {
+                return true;
+            }
+
+            if execute_step == id {
+                return true;
+            }
+        }
+
+        false
+    }
+
     pub async fn load(settings: &SettingsModel) -> Self {
         let release_settings = settings.get_file_name("release.yaml");
 
