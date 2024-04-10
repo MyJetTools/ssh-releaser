@@ -6,3 +6,5 @@ mod remote_command;
 pub use remote_command::*;
 mod release_settings_model;
 pub use release_settings_model::*;
+mod external_variables_model;
+pub use external_variables_model::*;

@@ -13,15 +13,7 @@ pub struct AppContext {
 
 impl AppContext {
     pub async fn new(settings: SettingsModel) -> AppContext {
-        let release_settings = settings.get_file_name("release.yaml");
-
-        let content = tokio::fs::read(release_settings.clone()).await.unwrap();
-
-        println!("Loading release settings from: {}", release_settings);
-
-        let release_settings: ReleaseSettingsModel =
-            serde_yaml::from_slice(content.as_slice()).unwrap();
-
+        let release_settings = ReleaseSettingsModel::load(&settings).await;
         AppContext {
             settings,
             ssh_sessions: Mutex::new(HashMap::new()),
