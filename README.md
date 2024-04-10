@@ -9,6 +9,6 @@ ${PLACEHOLDER_NAME} after processing
 
 ## Types of Placeholders
 
-${PLACEHOLDER_NAME} - content is going to be taken either from variables of from env variables;
-${/file_name} = content of placeholder is going to be taken from a file;
-${/file_name:url_encoded} = after reading - content is going to be url_encoded before it's going to be injected into a placeholder;
+* ${PLACEHOLDER_NAME} - content is going to be taken either from variables of from env variables;
+* ${/file_name} = content of placeholder is going to be taken from a file;
+* ${/file_name:url_encoded} = after reading - content is going to be url_encoded before it's going to be injected into a placeholder;
