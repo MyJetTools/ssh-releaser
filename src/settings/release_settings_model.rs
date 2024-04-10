@@ -29,8 +29,14 @@ impl ReleaseSettingsModel {
                 let file_name = settings.get_file_name(var_file.as_str());
 
                 let content = tokio::fs::read(file_name.as_str()).await.unwrap();
+
                 let external_vars: ExternalVariablesModel =
-                    serde_yaml::from_slice(content.as_slice()).unwrap();
+                    match serde_yaml::from_slice(content.as_slice()) {
+                        Ok(result) => result,
+                        Err(err) => {
+                            panic!("can not load yaml: {}. Err: {}", file_name, err)
+                        }
+                    };
 
                 for (key, value) in external_vars.vars {
                     if release_settings.vars.contains_key(key.as_str()) {

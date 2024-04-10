@@ -21,7 +21,11 @@ pub fn populate_variables<'s>(app: &AppContext, src: &'s str) -> StrOrString<'s>
         match token {
             rust_extensions::placeholders::ContentToken::Text(text) => result.push_str(text),
             rust_extensions::placeholders::ContentToken::Placeholder(placeholder) => {
-                if let Some(value) = app.release_settings.vars.get(placeholder) {
+                if placeholder.starts_with("$") {
+                    result.push_str("${");
+                    result.push_str(placeholder[1..].as_ref());
+                    result.push('}');
+                } else if let Some(value) = app.release_settings.vars.get(placeholder) {
                     result.push_str(value);
                 } else {
                     if let Ok(value) = std::env::var(placeholder) {

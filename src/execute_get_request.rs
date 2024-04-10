@@ -17,10 +17,11 @@ pub async fn execute_get_request(app: &AppContext, ssh: &str, get_request: &GetD
         .await
         .unwrap();
 
-    let status_code = http_client
+    let (status_code, text) = http_client
         .get(remote_uri, &get_request.headers)
         .await
         .unwrap();
 
     println!("Status code: {}", status_code);
+    println!("text: {}", text);
 }
