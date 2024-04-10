@@ -32,12 +32,22 @@ pub async fn populate_variables<'s>(app: &AppContext, src: &'s str) -> StrOrStri
                     None => (placeholder, ""),
                 };
 
-                let content = get_placeholder_content(app, placeholder_to_process).await;
+                let populate_placeholders_after_reading_from_file = encoding != "raw";
+
+                let content = get_placeholder_content(
+                    app,
+                    placeholder_to_process,
+                    populate_placeholders_after_reading_from_file,
+                )
+                .await;
 
                 match encoding {
                     "url_encoded" => {
                         let url_encoded = convert_url_encoded(content.as_str());
                         result.push_str(url_encoded.as_str());
+                    }
+                    "raw" => {
+                        result.push_str(content.as_str());
                     }
                     "" => {
                         result.push_str(content.as_str());
@@ -53,10 +63,17 @@ pub async fn populate_variables<'s>(app: &AppContext, src: &'s str) -> StrOrStri
     result.into()
 }
 
-async fn get_placeholder_content<'s>(app: &'s AppContext, placeholder: &str) -> StrOrString<'s> {
+async fn get_placeholder_content<'s>(
+    app: &'s AppContext,
+    placeholder: &str,
+    populate_placeholders_after_reading_from_file: bool,
+) -> StrOrString<'s> {
     if placeholder.starts_with("/") {
-        let content = crate::scripts::load_file(app, placeholder).await;
-        let content = super::populate_variables_after_loading_from_file(app, content);
+        let mut content = crate::scripts::load_file(app, placeholder).await;
+        if populate_placeholders_after_reading_from_file {
+            content = super::populate_variables_after_loading_from_file(app, content);
+        }
+
         return content.into();
     }
 
