@@ -15,9 +15,11 @@ pub struct SettingsModel {
 
 impl SettingsModel {
     pub fn get_file_name(&self, file_name: &str) -> String {
-        let mut result = self
-            .working_dir
-            .replace("~", std::env::var("HOME").unwrap().as_str());
+        let mut result = if file_name.starts_with("~") {
+            self.home_dir.to_string()
+        } else {
+            self.working_dir.to_string()
+        };
 
         if !result.ends_with(path::MAIN_SEPARATOR) {
             result.push(path::MAIN_SEPARATOR);
@@ -25,8 +27,10 @@ impl SettingsModel {
 
         if file_name.starts_with(path::MAIN_SEPARATOR) {
             result.push_str(&file_name[1..]);
+        } else if file_name.starts_with("~/") {
+            result.push_str(&file_name[2..]);
         } else {
-            result.push_str(file_name);
+            result.push_str(&file_name);
         }
 
         result
@@ -38,6 +42,26 @@ impl SettingsModel {
         let content = tokio::fs::read(file_name.clone()).await.unwrap();
 
         serde_yaml::from_slice(content.as_slice()).unwrap()
+    }
+
+    pub fn post_process(&mut self) {
+        if self.home_dir.starts_with("~") {
+            self.home_dir = self
+                .home_dir
+                .replace("~", std::env::var("HOME").unwrap().as_str());
+        }
+
+        if self.working_dir.starts_with("~") {
+            self.working_dir = self
+                .working_dir
+                .replace("~", std::env::var("HOME").unwrap().as_str());
+        }
+
+        if self.global_vars.starts_with("~") {
+            self.global_vars = self
+                .global_vars
+                .replace("~", std::env::var("HOME").unwrap().as_str());
+        }
     }
 }
 

@@ -64,7 +64,7 @@ async fn get_placeholder_content<'s>(
     placeholder: &str,
     populate_placeholders_after_reading_from_file: bool,
 ) -> StrOrString<'s> {
-    if placeholder.starts_with("/") {
+    if placeholder.starts_with("/") || placeholder.starts_with("~") {
         let mut content = crate::scripts::load_file(app, placeholder).await;
         if populate_placeholders_after_reading_from_file {
             content = super::populate_variables_after_loading_from_file(app, content);
