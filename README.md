@@ -24,12 +24,13 @@ vars:
 
 # working_dir description.
 
+working_dir - is a directory which is better to keep privately in git repositories. If git repository is going to be cloud based (not company in-house) such as github or gitlab - better not to keep anything sensitive in working_dir. Everything sensitive better goes to global_vars file or home_dir.
+
 working_dir must contain a release.yaml yaml which is a starting point for release scripting.
 
 Format of release.yaml file:
 
 ```yaml
-
 vars:
   KEY: VALUE
   KEY2: VALUE2
@@ -63,11 +64,6 @@ steps:
   - id: install-service_2
     from_file: /service_2/install-script.yaml
 ```
-
-Since release.yaml is a part of working_dir - the best practice would be to it as a whole working_directory in a git repository. This way - all the changes are going to be tracked and it's going to be easy to revert to a previous version of a release.yaml file.
-
-All the references to the files such as /server_2/install-script.yaml are made related to the working_directory.
-
 
 Ssh connections are made with ssh_agent.
 
