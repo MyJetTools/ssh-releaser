@@ -12,7 +12,7 @@ global_vars: ~/global_vars.yaml
 
 * home_dir - the release scripts are going to be referencing to files which we do not want to store in public git repositories. To reference to this file - '~' at the start of the file path would reference to a home directory. For instance: ~/service_name/install.yaml. This file is going to be referenced to a file in a home directory which is specified in a home_dir field;
 
-* global_vars - is a file with global variables. This file is going to be used for all scripts. It's a good place to store global variables which are not going to pub published to cloud based git repositories not to share anything sensitive.
+* global_vars - is a file with global variables. This file is going to be used for all scripts. It's a good place to store global variables which are not going to be published to cloud based git repositories not to share anything sensitive.
 
 Format of global_vars file:
 
