@@ -62,6 +62,16 @@ impl ReleaseSettingsModel {
             }
         }
 
+        let global_vars = settings.read_global_vars().await;
+
+        for (key, value) in global_vars.vars {
+            if release_settings.vars.contains_key(key.as_str()) {
+                panic!("Variable {} already defined", key);
+            }
+
+            release_settings.vars.insert(key, value);
+        }
+
         release_settings
     }
 }

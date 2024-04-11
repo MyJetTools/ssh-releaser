@@ -4,11 +4,13 @@ use serde::*;
 
 use crate::app::AppContext;
 
-use super::RemoteCommand;
+use super::{GlobalVarsModel, RemoteCommand};
 
 #[derive(my_settings_reader::SettingsModel, Debug, Clone, Serialize, Deserialize)]
 pub struct SettingsModel {
     working_dir: String,
+    home_dir: String, // Script step would use this director as home directory which is going to be resolved by ~ symbol
+    global_vars: String, // Application is going to apply global variables from this file
 }
 
 impl SettingsModel {
@@ -28,6 +30,14 @@ impl SettingsModel {
         }
 
         result
+    }
+
+    pub async fn read_global_vars(&self) -> GlobalVarsModel {
+        let file_name = self.get_file_name(self.global_vars.as_str());
+
+        let content = tokio::fs::read(file_name.clone()).await.unwrap();
+
+        serde_yaml::from_slice(content.as_slice()).unwrap()
     }
 }
 

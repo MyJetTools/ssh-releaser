@@ -8,3 +8,5 @@ mod release_settings_model;
 pub use release_settings_model::*;
 mod external_variables_model;
 pub use external_variables_model::*;
+mod global_vars_model;
+pub use global_vars_model::*;

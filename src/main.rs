@@ -11,7 +11,7 @@ mod upload_file;
 
 #[tokio::main]
 async fn main() {
-    let my_settings = SettingsModel::read_from_file(".release_config".to_string())
+    let my_settings = SettingsModel::read_from_file(".ssh-releaser".to_string())
         .await
         .unwrap();
     let app = app::AppContext::new(my_settings.clone()).await;
