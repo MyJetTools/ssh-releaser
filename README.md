@@ -1,3 +1,7 @@
+# Disclaimer
+
+"Terminology will be refined and updated once all cases are covered and the scope and types of abstractions are clearly defined."
+
 # Initial settings
 
 Application gets initial settings from a ~/.ssh-releaser file. File is a yaml file with the following structure:
