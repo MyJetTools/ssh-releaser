@@ -125,9 +125,9 @@ script:
 ```
 
 Please keep in mind:
-* in case of upload script - local_path has format ./xxxxx which means file which is taken to be uploaded is in the same directory as script.yaml step file;
-* when we are using from_template case - /install-service-template.yaml as well is going to use ./xxxxx folder from the script.yaml step file;
-* params which are passed to a template file are going to be used as placeholders in a template file;
+* in case of upload type - local_path has format ./xxxxx which means file is taken to be uploaded is in the same directory as step file;
+* when we are using from_template case - /install-service-template.yaml and template file is in other director then step file  ./xxxxx folder relates to the step file;
+* params which are passed to a template file are going to be used as placeholders in a template file. Example of template parameter ${MY_PARAM}; When yaml is processed - Params  are populated first, placeholders second.
 
 ### example of template.yaml file
 ```yaml
