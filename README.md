@@ -93,7 +93,7 @@ script:
     ssh: VM-02
     name: Uploading docker-compose file
     file:
-      local_path: /service_name/docker-compose.yaml
+      local_path: ./docker-compose.yaml
       remote_path: ~/services/service_name/docker-compose.yaml
       mode: 0o644
   - type: http_post
@@ -109,14 +109,47 @@ script:
     ssh: VM-02
     commands:
       - name: Pull Docker image
-        exec: docker-compose -f $HOME/services/service_name/docker-compose.yaml pull
+        exec: docker-compose -f $HOME/services/my-service-name/docker-compose.yaml pull
         ignore_error: false
 
-      - name: Kick off trading-info-integration
-        exec: docker-compose -f $HOME/services/service_name/docker-compose.yaml up -d
+      - name: Kick off my-service-name
+        exec: docker-compose -f $HOME/services/my-service-name/docker-compose.yaml up -d
         ignore_error: false
+
+  - type: from_template
+    template_file_name: "/install-service-template.yaml"
+    params:
+      SSH_VM: VM-02
+      SERVICE_NAME: my-service-name    
 
 ```
+
+Please keep in mind:
+* in case of upload script - local_path has format ./xxxxx which means file which is taken to be uploaded is in the same directory as script.yaml step file;
+* when we are using from_template case - /install-service-template.yaml as well is going to use ./xxxxx folder from the script.yaml step file;
+* params which are passed to a template file are going to be used as placeholders in a template file;
+
+### example of template.yaml file
+```yaml
+script:
+  - type: execute
+    ssh: *{SSH_VM}
+    commands:
+      - name: Creating Folder for *{SERVICE_NAME} on *{SSH_VM}
+        exec: mkdir $HOME/services/*{SERVICE_NAME}
+        ignore_error: true
+
+  - type: upload
+    ssh: *{SSH_VM}
+    name: Uploading docker-compose file
+    file:
+      local_file: ./docker-compose.yaml
+      remote_file: ~/services/*{SERVICE_NAME}/docker-compose.yaml
+      mode: 0o644        
+
+```
+
+
 
 
 # Working with Placeholder.
@@ -139,4 +172,7 @@ ${PLACEHOLDER_NAME} after processing
 * ${/file_name:raw} = after reading from a file - if content has placeholders inside - they are not going to be populated by variables from files;
 
 * ${/file_name:url_encoded:raw} = raw - makes sure that content from file is not altered from variables. url_encoded  - makes sure that content is url_encoded before it's going to be injected into a placeholder;
+
+
+* *{PLACEHOLDER_NAME} - is a placeholder parameter which is used in case when yaml is used as a template and parameter has to be passed.
 
