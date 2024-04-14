@@ -1,14 +1,14 @@
 use crate::{app::AppContext, script_environment::ScriptEnvironment};
 
-pub const PLACEHOLDER_OPEN_TOKEN: &str = "${";
 pub const PLACEHOLDER_CLOSE_TOKEN: &str = "}";
 
 pub fn populate_variables_after_loading_from_file(
     app: &AppContext,
     script_env: Option<&impl ScriptEnvironment>,
     src: String,
+    open_token: &'static str,
 ) -> String {
-    let index = src.find(PLACEHOLDER_OPEN_TOKEN);
+    let index = src.find(open_token);
 
     if index.is_none() {
         return src;
@@ -17,7 +17,7 @@ pub fn populate_variables_after_loading_from_file(
 
     for token in rust_extensions::placeholders::PlaceholdersIterator::new(
         src.as_str(),
-        PLACEHOLDER_OPEN_TOKEN,
+        open_token,
         PLACEHOLDER_CLOSE_TOKEN,
     ) {
         match token {

@@ -1,3 +1,6 @@
+use crate::file_path::FilePathRef;
+
+#[derive(Clone)]
 pub struct FileName(String);
 
 impl FileName {
@@ -9,19 +12,19 @@ impl FileName {
         self.0.as_str()
     }
 
-    pub fn get_file_path(&self) -> &str {
+    pub fn get_file_path<'s>(&'s self) -> FilePathRef<'s> {
         let src = self.0.as_bytes();
 
         let mut index = src.len();
 
         while index > 0 {
             if let Some(b'/') = src.get(index - 1) {
-                return std::str::from_utf8(&src[0..index]).unwrap();
+                return FilePathRef::new(std::str::from_utf8(&src[0..index]).unwrap());
             }
             index -= 1;
         }
 
-        self.0.as_str()
+        FilePathRef::new(self.0.as_str())
     }
 }
 
@@ -35,7 +38,7 @@ mod tests {
 
         let file_name = FileName::new(src);
 
-        assert_eq!("/test/test2/", file_name.get_file_path());
+        assert_eq!("/test/test2/", file_name.get_file_path().as_str());
     }
 
     #[test]
@@ -44,6 +47,6 @@ mod tests {
 
         let file_name = FileName::new(src);
 
-        assert_eq!("/", file_name.get_file_path());
+        assert_eq!("/", file_name.get_file_path().as_str());
     }
 }

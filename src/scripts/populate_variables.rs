@@ -72,7 +72,12 @@ async fn get_placeholder_content<'s>(
     {
         let (mut content, _) = crate::scripts::load_file(app, script_env, placeholder).await;
         if populate_placeholders_after_reading_from_file {
-            content = super::populate_variables_after_loading_from_file(app, script_env, content);
+            content = super::populate_variables_after_loading_from_file(
+                app,
+                script_env,
+                content,
+                PLACEHOLDER_OPEN_TOKEN,
+            );
         }
 
         return content.into();

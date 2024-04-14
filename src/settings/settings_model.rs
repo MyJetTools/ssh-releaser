@@ -1,8 +1,8 @@
-use std::{collections::HashMap, path};
+use std::path;
 
 use serde::*;
 
-use crate::{app::AppContext, file_name::FileName, script_environment::ScriptEnvironment};
+use crate::{file_name::FileName, script_environment::ScriptEnvironment};
 
 use super::{GlobalVarsModel, RemoteCommand};
 
@@ -24,7 +24,7 @@ impl SettingsModel {
         } else if file_name.starts_with(".") {
             if let Some(script_env) = script_env {
                 let current_path = script_env.get_current_path().unwrap();
-                current_path.to_string()
+                current_path.as_str().to_string()
             } else {
                 self.working_dir.to_string()
             }
@@ -91,52 +91,4 @@ pub struct StepModel {
     pub id: String,
     pub script: Option<Vec<RemoteCommand>>,
     pub from_file: Option<String>,
-}
-
-impl StepModel {
-    pub async fn get_script(&self, app: &AppContext) -> ScriptModel {
-        if let Some(script) = self.script.as_ref() {
-            return ScriptModel {
-                script: script.clone(),
-                vars: None,
-                current_path: None,
-            };
-        }
-
-        if let Some(from_file) = self.from_file.as_ref() {
-            let script_env: Option<&ScriptModel> = None;
-            let (file_content, file_name) =
-                crate::scripts::load_file(app, script_env, from_file).await;
-
-            let mut result: ScriptModel = serde_yaml::from_str(&file_content).unwrap();
-
-            result.current_path = Some(file_name.get_file_path().to_owned());
-            return result;
-        }
-
-        panic!("Please specify either script or from_file in the step model")
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ScriptModel {
-    pub vars: Option<HashMap<String, String>>,
-    pub script: Vec<RemoteCommand>,
-    #[serde(skip)]
-    current_path: Option<String>,
-}
-
-impl ScriptEnvironment for ScriptModel {
-    fn get_var(&self, key: &str) -> Option<&str> {
-        if let Some(vars) = self.vars.as_ref() {
-            return vars.get(key).map(|itm| itm.as_str());
-        }
-
-        None
-    }
-
-    fn get_current_path(&self) -> Option<&str> {
-        let result = self.current_path.as_ref()?;
-        Some(result.as_str())
-    }
 }
