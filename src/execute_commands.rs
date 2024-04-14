@@ -1,15 +1,27 @@
 use std::time::Duration;
 
-use crate::{app::AppContext, settings::RemoteCommandItem};
+use crate::{
+    app::AppContext,
+    settings::{RemoteCommandItem, ScriptModel},
+};
 
 const EXECUTE_TIMEOUT: Duration = Duration::from_secs(30);
 
-pub async fn execute_commands(app: &AppContext, ssh: &str, commands: &[RemoteCommandItem]) {
+pub async fn execute_commands(
+    app: &AppContext,
+    script_model: &ScriptModel,
+    ssh: &str,
+    commands: &[RemoteCommandItem],
+) {
     let ssh_session = app.get_ssh_session(ssh).await;
     for command in commands {
-        println!("Executing SSH command: {}", command.name);
+        let command_name =
+            crate::scripts::populate_variables(app, Some(script_model), command.name.as_str())
+                .await;
 
-        let command_to_exec = get_command(app, command).await;
+        println!("Executing SSH command: {}", command_name.as_str());
+
+        let command_to_exec = get_command(app, script_model, command).await;
         println!(">> {}", command_to_exec);
 
         let (result, status_code) = ssh_session
@@ -27,16 +39,24 @@ pub async fn execute_commands(app: &AppContext, ssh: &str, commands: &[RemoteCom
     }
 }
 
-async fn get_command(app: &AppContext, command: &RemoteCommandItem) -> String {
-    if command.exec.is_some() {
-        return command.exec.as_ref().unwrap().clone();
+async fn get_command(
+    app: &AppContext,
+    script_model: &ScriptModel,
+    command: &RemoteCommandItem,
+) -> String {
+    if let Some(command_to_execute) = &command.exec {
+        let command_to_execute =
+            crate::scripts::populate_variables(app, Some(script_model), command_to_execute).await;
+        return command_to_execute.to_string();
     }
 
-    if command.exec_from_file.is_some() {
-        let file_name = app
-            .settings
-            .get_file_name(command.exec_from_file.as_ref().unwrap());
-        let content = tokio::fs::read_to_string(file_name).await.unwrap();
+    if let Some(exec_from_file) = &command.exec_from_file {
+        let content = crate::scripts::load_file_and_populate_placeholders(
+            app,
+            Some(script_model),
+            exec_from_file,
+        )
+        .await;
         return content;
     }
 

@@ -1,15 +1,17 @@
-use core::panic;
-
 use rust_extensions::StrOrString;
 
-use crate::app::AppContext;
+use crate::{app::AppContext, script_environment::ScriptEnvironment};
 
 use super::PopulateVariablesProcessing;
 
 pub const PLACEHOLDER_OPEN_TOKEN: &str = "${";
 pub const PLACEHOLDER_CLOSE_TOKEN: &str = "}";
 
-pub async fn populate_variables<'s>(app: &AppContext, src: &'s str) -> StrOrString<'s> {
+pub async fn populate_variables<'s>(
+    app: &AppContext,
+    script_env: Option<&impl ScriptEnvironment>,
+    src: &'s str,
+) -> StrOrString<'s> {
     let index = src.find(PLACEHOLDER_OPEN_TOKEN);
 
     if index.is_none() {
@@ -41,6 +43,7 @@ pub async fn populate_variables<'s>(app: &AppContext, src: &'s str) -> StrOrStri
 
                 let content = get_placeholder_content(
                     app,
+                    script_env,
                     placeholder_to_process,
                     populate_placeholders_after_reading_from_file,
                 )
@@ -61,13 +64,15 @@ pub async fn populate_variables<'s>(app: &AppContext, src: &'s str) -> StrOrStri
 
 async fn get_placeholder_content<'s>(
     app: &'s AppContext,
+    script_env: Option<&'s impl ScriptEnvironment>,
     placeholder: &str,
     populate_placeholders_after_reading_from_file: bool,
 ) -> StrOrString<'s> {
-    if placeholder.starts_with("/") || placeholder.starts_with("~") {
-        let mut content = crate::scripts::load_file(app, placeholder).await;
+    if placeholder.starts_with("/") || placeholder.starts_with("~") || placeholder.starts_with(".")
+    {
+        let (mut content, _) = crate::scripts::load_file(app, script_env, placeholder).await;
         if populate_placeholders_after_reading_from_file {
-            content = super::populate_variables_after_loading_from_file(app, content);
+            content = super::populate_variables_after_loading_from_file(app, script_env, content);
         }
 
         return content.into();
@@ -82,15 +87,7 @@ async fn get_placeholder_content<'s>(
         return result.into();
     }
 
-    if let Some(value) = app.release_settings.vars.get(placeholder) {
-        return value.into();
-    }
-
-    if let Ok(value) = std::env::var(placeholder) {
-        return value.into();
-    }
-
-    panic!("Variable {} not found", placeholder);
+    app.get_env_variable(script_env, placeholder)
 }
 
 fn convert_url_encoded(content: &str) -> String {

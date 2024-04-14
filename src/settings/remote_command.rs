@@ -24,8 +24,8 @@ pub struct RemoteCommandItem {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UploadFileModel {
-    pub local_path: String,
-    pub remote_path: String,
+    pub local_file: String,
+    pub remote_file: String,
     pub mode: i32,
 }
 

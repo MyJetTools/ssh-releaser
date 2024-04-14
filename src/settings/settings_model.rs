@@ -1,8 +1,8 @@
-use std::path;
+use std::{collections::HashMap, path};
 
 use serde::*;
 
-use crate::app::AppContext;
+use crate::{app::AppContext, file_name::FileName, script_environment::ScriptEnvironment};
 
 use super::{GlobalVarsModel, RemoteCommand};
 
@@ -14,9 +14,20 @@ pub struct SettingsModel {
 }
 
 impl SettingsModel {
-    pub fn get_file_name(&self, file_name: &str) -> String {
+    pub fn get_file_name(
+        &self,
+        script_env: Option<&impl ScriptEnvironment>,
+        file_name: &str,
+    ) -> FileName {
         let mut result = if file_name.starts_with("~") {
             self.home_dir.to_string()
+        } else if file_name.starts_with(".") {
+            if let Some(script_env) = script_env {
+                let current_path = script_env.get_current_path().unwrap();
+                current_path.to_string()
+            } else {
+                self.working_dir.to_string()
+            }
         } else {
             self.working_dir.to_string()
         };
@@ -27,21 +38,31 @@ impl SettingsModel {
 
         if file_name.starts_with(path::MAIN_SEPARATOR) {
             result.push_str(&file_name[1..]);
-        } else if file_name.starts_with("~/") {
+        } else if file_name.starts_with("~/") || file_name.starts_with("./") {
             result.push_str(&file_name[2..]);
         } else {
             result.push_str(&file_name);
         }
 
-        result
+        FileName::new(result)
     }
 
     pub async fn read_global_vars(&self) -> GlobalVarsModel {
-        let file_name = self.get_file_name(self.global_vars.as_str());
+        println!(
+            "Reading global vars from file: {}",
+            self.global_vars.as_str()
+        );
+        let content = tokio::fs::read(self.global_vars.as_str()).await;
 
-        let content = tokio::fs::read(file_name.clone()).await.unwrap();
+        if let Err(err) = &content {
+            panic!(
+                "Can not read global vars from file {}. Err: {}",
+                self.global_vars.as_str(),
+                err
+            )
+        }
 
-        serde_yaml::from_slice(content.as_slice()).unwrap()
+        serde_yaml::from_slice(content.as_ref().unwrap()).unwrap()
     }
 
     pub fn post_process(&mut self) {
@@ -73,16 +94,24 @@ pub struct StepModel {
 }
 
 impl StepModel {
-    pub async fn get_remote_commands(&self, app: &AppContext) -> Vec<RemoteCommand> {
+    pub async fn get_script(&self, app: &AppContext) -> ScriptModel {
         if let Some(script) = self.script.as_ref() {
-            return script.clone();
+            return ScriptModel {
+                script: script.clone(),
+                vars: None,
+                current_path: None,
+            };
         }
 
         if let Some(from_file) = self.from_file.as_ref() {
-            let file_content = crate::scripts::load_file(app, from_file).await;
+            let script_env: Option<&ScriptModel> = None;
+            let (file_content, file_name) =
+                crate::scripts::load_file(app, script_env, from_file).await;
 
-            let result: ScriptFromFileModel = serde_yaml::from_str(&file_content).unwrap();
-            return result.script;
+            let mut result: ScriptModel = serde_yaml::from_str(&file_content).unwrap();
+
+            result.current_path = Some(file_name.get_file_path().to_owned());
+            return result;
         }
 
         panic!("Please specify either script or from_file in the step model")
@@ -90,6 +119,24 @@ impl StepModel {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ScriptFromFileModel {
+pub struct ScriptModel {
+    pub vars: Option<HashMap<String, String>>,
     pub script: Vec<RemoteCommand>,
+    #[serde(skip)]
+    current_path: Option<String>,
+}
+
+impl ScriptEnvironment for ScriptModel {
+    fn get_var(&self, key: &str) -> Option<&str> {
+        if let Some(vars) = self.vars.as_ref() {
+            return vars.get(key).map(|itm| itm.as_str());
+        }
+
+        None
+    }
+
+    fn get_current_path(&self) -> Option<&str> {
+        let result = self.current_path.as_ref()?;
+        Some(result.as_str())
+    }
 }

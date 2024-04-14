@@ -133,7 +133,10 @@ ${PLACEHOLDER_NAME} after processing
 
 * ${PLACEHOLDER_NAME} - content is going to be taken either from variables of from env variables;
 * ${/file_name} = content of placeholder is going to be taken from a file;
+* ${./file_name} = content of placeholder is going to be taken from a file at the same folder as script;
+
 * ${/file_name:url_encoded} = after reading - content is going to be url_encoded before it's going to be injected into a placeholder;
 * ${/file_name:raw} = after reading from a file - if content has placeholders inside - they are not going to be populated by variables from files;
 
 * ${/file_name:url_encoded:raw} = raw - makes sure that content from file is not altered from variables. url_encoded  - makes sure that content is url_encoded before it's going to be injected into a placeholder;
+

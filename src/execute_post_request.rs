@@ -2,16 +2,26 @@ use std::str::FromStr;
 
 use hyper::Uri;
 
-use crate::{app::AppContext, http_over_ssh::Http1Client, scripts, settings::PostDataModel};
+use crate::{
+    app::AppContext,
+    http_over_ssh::Http1Client,
+    scripts,
+    settings::{PostDataModel, ScriptModel},
+};
 
-pub async fn execute_post_request(app: &AppContext, ssh: &str, post_request: &PostDataModel) {
+pub async fn execute_post_request(
+    app: &AppContext,
+    script: &ScriptModel,
+    ssh: &str,
+    post_request: &PostDataModel,
+) {
     let ssh_credentials = app.get_ssh_credentials(ssh);
 
-    let url = scripts::populate_variables(app, post_request.url.as_str()).await;
+    let url = scripts::populate_variables(app, Some(script), post_request.url.as_str()).await;
 
     let remote_uri = Uri::from_str(url.as_str()).unwrap();
 
-    let content = get_body(app, &post_request).await;
+    let content = get_body(app, script, &post_request).await;
 
     //    println!("Content: {}", content);
 
@@ -27,18 +37,19 @@ pub async fn execute_post_request(app: &AppContext, ssh: &str, post_request: &Po
     println!("Status code: {}", status_code);
 }
 
-async fn get_body(app: &AppContext, model: &PostDataModel) -> String {
+async fn get_body(app: &AppContext, script: &ScriptModel, model: &PostDataModel) -> String {
     if let Some(body) = model.body.as_ref() {
         if model.raw_content() {
             return body.clone();
         }
-        return crate::scripts::populate_variables(app, body)
+        return crate::scripts::populate_variables(app, Some(script), body)
             .await
             .to_string();
     }
 
     if let Some(body_path) = model.body_path.as_ref() {
-        let content = crate::scripts::load_file_and_populate_placeholders(app, body_path).await;
+        let content =
+            crate::scripts::load_file_and_populate_placeholders(app, Some(script), body_path).await;
         if model.raw_content() {
             return content;
         }

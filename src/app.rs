@@ -1,9 +1,13 @@
 use std::{collections::HashMap, sync::Arc};
 
 use my_ssh::{SshCredentials, SshSession};
+use rust_extensions::StrOrString;
 use tokio::sync::Mutex;
 
-use crate::settings::{ReleaseSettingsModel, SettingsModel};
+use crate::{
+    script_environment::ScriptEnvironment,
+    settings::{ReleaseSettingsModel, SettingsModel},
+};
 
 pub struct AppContext {
     ssh_sessions: Mutex<HashMap<String, Arc<SshSession>>>,
@@ -51,5 +55,27 @@ impl AppContext {
         ssh_sessions.insert(id.to_string(), session.clone());
 
         session
+    }
+
+    pub fn get_env_variable<'s>(
+        &'s self,
+        script_env: Option<&'s impl ScriptEnvironment>,
+        name: &str,
+    ) -> StrOrString<'s> {
+        if let Some(script_env) = script_env {
+            if let Some(value) = script_env.get_var(name) {
+                return value.into();
+            }
+        }
+
+        if let Some(value) = self.release_settings.vars.get(name) {
+            return value.into();
+        }
+
+        if let Ok(value) = std::env::var(name) {
+            return value.into();
+        }
+
+        panic!("Variable {} not found", name);
     }
 }

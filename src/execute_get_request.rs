@@ -2,12 +2,22 @@ use std::str::FromStr;
 
 use hyper::Uri;
 
-use crate::{app::AppContext, http_over_ssh::Http1Client, scripts, settings::GetDataModel};
+use crate::{
+    app::AppContext,
+    http_over_ssh::Http1Client,
+    scripts,
+    settings::{GetDataModel, ScriptModel},
+};
 
-pub async fn execute_get_request(app: &AppContext, ssh: &str, get_request: &GetDataModel) {
+pub async fn execute_get_request(
+    app: &AppContext,
+    script: &ScriptModel,
+    ssh: &str,
+    get_request: &GetDataModel,
+) {
     let ssh_credentials = app.get_ssh_credentials(ssh);
 
-    let url = scripts::populate_variables(app, get_request.url.as_str()).await;
+    let url = scripts::populate_variables(app, Some(script), get_request.url.as_str()).await;
 
     let remote_uri = Uri::from_str(url.as_str()).unwrap();
 

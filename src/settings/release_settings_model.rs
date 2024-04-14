@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::*;
 
-use crate::settings::ExternalVariablesModel;
+use crate::settings::{ExternalVariablesModel, ScriptModel};
 
 use super::{SettingsModel, SshConfig, StepModel};
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -30,17 +30,21 @@ impl ReleaseSettingsModel {
     }
 
     pub async fn load(settings: &SettingsModel) -> Self {
-        let release_settings = settings.get_file_name("release.yaml");
+        let script_env: Option<&ScriptModel> = None;
+        let release_settings = settings.get_file_name(script_env, "release.yaml");
 
-        let content = tokio::fs::read(release_settings.clone()).await.unwrap();
+        let content = tokio::fs::read(release_settings.as_str()).await.unwrap();
 
-        println!("Loading release settings from: {}", release_settings);
+        println!(
+            "Loading release settings from: {}",
+            release_settings.as_str()
+        );
 
         let mut release_settings: Self = serde_yaml::from_slice(content.as_slice()).unwrap();
 
         if let Some(var_files) = release_settings.var_files.clone() {
             for var_file in var_files {
-                let file_name = settings.get_file_name(var_file.as_str());
+                let file_name = settings.get_file_name(script_env, var_file.as_str());
 
                 let content = tokio::fs::read(file_name.as_str()).await.unwrap();
 
@@ -48,7 +52,7 @@ impl ReleaseSettingsModel {
                     match serde_yaml::from_slice(content.as_slice()) {
                         Ok(result) => result,
                         Err(err) => {
-                            panic!("can not load yaml: {}. Err: {}", file_name, err)
+                            panic!("can not load yaml: {}. Err: {}", file_name.as_str(), err)
                         }
                     };
 

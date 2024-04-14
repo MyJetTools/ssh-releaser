@@ -1,11 +1,13 @@
-use core::panic;
-
-use crate::app::AppContext;
+use crate::{app::AppContext, script_environment::ScriptEnvironment};
 
 pub const PLACEHOLDER_OPEN_TOKEN: &str = "${";
 pub const PLACEHOLDER_CLOSE_TOKEN: &str = "}";
 
-pub fn populate_variables_after_loading_from_file(app: &AppContext, src: String) -> String {
+pub fn populate_variables_after_loading_from_file(
+    app: &AppContext,
+    script_env: Option<&impl ScriptEnvironment>,
+    src: String,
+) -> String {
     let index = src.find(PLACEHOLDER_OPEN_TOKEN);
 
     if index.is_none() {
@@ -25,12 +27,9 @@ pub fn populate_variables_after_loading_from_file(app: &AppContext, src: String)
                     result.push_str("${");
                     result.push_str(placeholder[1..].as_ref());
                     result.push('}');
-                } else if let Some(value) = app.release_settings.vars.get(placeholder) {
-                    result.push_str(value);
-                } else if let Ok(value) = std::env::var(placeholder) {
-                    result.push_str(value.as_str());
                 } else {
-                    panic!("Variable {} not found", placeholder);
+                    let value = app.get_env_variable(script_env, placeholder);
+                    result.push_str(value.as_str());
                 }
             }
         }
