@@ -81,6 +81,7 @@ vars:
 
 # Format of Step file
 
+Example: /service_name/install-script.yaml
 ```yaml
 script:
   - type: execute
@@ -103,17 +104,17 @@ script:
       url: ${SETTINGS_URL}/api/templates/post/
       headers:
         Content-Type: application/x-www-form-urlencoded
-      body: env=env_name&name=service_name&yaml=${/accounts-integration/settings.yaml:url_encoded:raw}
+      body: env=env_name&name=service_name&yaml=${./settings.yaml:url_encoded:raw}
 
   - type: execute
     ssh: VM-02
     commands:
       - name: Pull Docker image
-        exec: docker-compose -f $HOME/services/my-service-name/docker-compose.yaml pull
+        exec: docker-compose -f $HOME/services/*{SERVICE_NAME}/docker-compose.yaml pull
         ignore_error: false
 
       - name: Kick off my-service-name
-        exec: docker-compose -f $HOME/services/my-service-name/docker-compose.yaml up -d
+        exec: docker-compose -f $HOME/services/*{SERVICE_NAME}/docker-compose.yaml up -d
         ignore_error: false
 
   - type: from_template
@@ -125,11 +126,14 @@ script:
 ```
 
 Please keep in mind:
-* in case of upload type - local_path has format ./xxxxx which means file is taken to be uploaded is in the same directory as step file;
-* when we are using from_template case - /install-service-template.yaml and template file is in other director then step file  ./xxxxx folder relates to the step file;
-* params which are passed to a template file are going to be used as placeholders in a template file. Example of template parameter ${MY_PARAM}; When yaml is processed - Params  are populated first, placeholders second.
+* in case of upload type - local_path has format ./xxxxx which means file is taken to be uploaded is in the same directory as install-script.yaml step file;
+* in case of http_post type - body has a ${./settings.yaml:url_encoded:raw} placeholder, which referees to a file in the same directory as install-script.yaml step file.
+
 
 ### example of template.yaml file
+
+File: /install-service-template.yaml
+
 ```yaml
 script:
   - type: execute
@@ -148,6 +152,9 @@ script:
       mode: 0o644        
 
 ```
+
+* when we are using from_template case and /install-service-template.yaml and /service_name/install-script.yaml are in different directories  ./xxxxx/file.yaml folder relates to the step file and going to be /service_name/xxxxx/file.yaml;
+* params which are passed to a template file are going to be used as placeholders in a template file. In our example parameters are *{SSH_VM} and *{SERVICE_NAME}; When yaml is processed - Params  are populated first, placeholders second.
 
 
 
