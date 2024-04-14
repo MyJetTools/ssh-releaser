@@ -153,7 +153,7 @@ script:
 
 ```
 
-* when we are using from_template case and /install-service-template.yaml and /service_name/install-script.yaml are in different directories  ./xxxxx/file.yaml folder relates to the step file and going to be /service_name/xxxxx/file.yaml;
+* when we are using from_template case and directory of /install-service-template.yaml is different to /service_name/install-script.yaml - ./xxxxx/file.yaml folder relates to the step file and going to be /service_name/xxxxx/file.yaml;
 * params which are passed to a template file are going to be used as placeholders in a template file. In our example parameters are *{SSH_VM} and *{SERVICE_NAME}; When yaml is processed - Params  are populated first, placeholders second.
 
 
