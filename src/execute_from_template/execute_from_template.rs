@@ -12,9 +12,17 @@ pub async fn execute_from_template(
     app: &AppContext,
     from_file: String,
     script_file_path: FilePath,
-    params: Option<HashMap<String, String>>,
+    mut params: Option<HashMap<String, String>>,
 ) {
     let script_env: Option<&ScriptModel> = None;
+
+    if let Some(params) = params.as_mut() {
+        for (key, value) in params.clone() {
+            let value = crate::scripts::populate_variables(app, script_env, &value).await;
+            params.insert(key.clone(), value.to_string());
+        }
+    }
+
     let file_name = app.settings.get_file_name(script_env, from_file.as_str());
 
     println!("Loading template from file: {}", file_name.as_str());

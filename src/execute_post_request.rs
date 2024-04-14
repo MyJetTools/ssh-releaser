@@ -29,12 +29,13 @@ pub async fn execute_post_request(
         .await
         .unwrap();
 
-    let status_code = http_client
+    let (status_code, text) = http_client
         .post(remote_uri, content.into_bytes(), &post_request.headers)
         .await
         .unwrap();
 
     println!("Status code: {}", status_code);
+    println!("text: {}", text);
 }
 
 async fn get_body(app: &AppContext, script: &ScriptModel, model: &PostDataModel) -> String {

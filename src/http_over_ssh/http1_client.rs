@@ -46,7 +46,7 @@ impl Http1Client {
         uri: Uri,
         body: Vec<u8>,
         headers: &Option<HashMap<String, String>>,
-    ) -> Result<u16, HttpClientError> {
+    ) -> Result<(u16, String), HttpClientError> {
         let body = http_body_util::Full::new(body.into());
         let mut request = Request::builder().uri(uri).method(Method::POST);
 
@@ -66,7 +66,10 @@ impl Http1Client {
             .send_request(request)
             .await
             .unwrap();
-        Ok(result.status().as_u16())
+
+        let status_code = result.status().as_u16();
+        let response = read_bytes(result.into_body()).await;
+        Ok((status_code, String::from_utf8(response).unwrap()))
     }
 
     pub async fn get(

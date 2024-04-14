@@ -1,5 +1,7 @@
 use crate::{app::AppContext, script_environment::ScriptEnvironment};
 
+use super::PopulateVariablesProcessing;
+
 pub const PLACEHOLDER_CLOSE_TOKEN: &str = "}";
 
 pub fn populate_variables_after_loading_from_file(
@@ -28,8 +30,26 @@ pub fn populate_variables_after_loading_from_file(
                     result.push_str(placeholder[1..].as_ref());
                     result.push('}');
                 } else {
-                    let value = app.get_env_variable(script_env, placeholder);
-                    result.push_str(value.as_str());
+                    let (placeholder_to_process, processing) = match placeholder.find(":") {
+                        Some(index) => {
+                            let placeholder_to_process = &placeholder[..index];
+                            let processing = PopulateVariablesProcessing::new(
+                                &placeholder[index + 1..],
+                                placeholder,
+                            );
+                            (placeholder_to_process, processing)
+                        }
+                        None => (placeholder, PopulateVariablesProcessing::empty()),
+                    };
+
+                    let content = app.get_env_variable(script_env, placeholder_to_process);
+
+                    if processing.has_url_encoded() {
+                        let url_encoded = super::convert_url_encoded(content.as_str());
+                        result.push_str(url_encoded.as_str());
+                    } else {
+                        result.push_str(content.as_str());
+                    }
                 }
             }
         }
