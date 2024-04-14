@@ -126,8 +126,8 @@ script:
 ```
 
 Please keep in mind:
-* in case of upload type - local_path has format ./xxxxx which means file is taken to be uploaded is in the same directory as install-script.yaml step file;
-* in case of http_post type - body has a ${./settings.yaml:url_encoded:raw} placeholder, which referees to a file in the same directory as install-script.yaml step file.
+* in case of upload type - local_path has format ./xxxxx which means file is taken to be uploaded is in the same directory as /service_name/install-script.yaml step file;
+* in case of http_post type - body has a ${./settings.yaml:url_encoded:raw} placeholder, which referees to a file in the same directory as /service_name/install-script.yaml step file.
 
 
 ### example of template.yaml file
