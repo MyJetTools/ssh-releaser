@@ -4,7 +4,7 @@ use serde::*;
 
 use crate::{file_name::FileName, script_environment::ScriptEnvironment};
 
-use super::{GlobalVarsModel, RemoteCommand};
+use super::{GlobalSettingsModel, RemoteCommand};
 
 #[derive(my_settings_reader::SettingsModel, Debug, Clone, Serialize, Deserialize)]
 pub struct SettingsModel {
@@ -47,7 +47,7 @@ impl SettingsModel {
         FileName::new(result)
     }
 
-    pub async fn read_global_vars(&self) -> GlobalVarsModel {
+    pub async fn read_global_vars(&self) -> GlobalSettingsModel {
         println!(
             "Reading global vars from file: {}",
             self.global_vars.as_str()

@@ -6,27 +6,29 @@ use tokio::sync::Mutex;
 
 use crate::{
     script_environment::ScriptEnvironment,
-    settings::{ReleaseSettingsModel, SettingsModel},
+    settings::{ReleaseSettingsModel, SettingsModel, SshConfig},
 };
 
 pub struct AppContext {
     ssh_sessions: Mutex<HashMap<String, Arc<SshSession>>>,
     pub settings: SettingsModel,
     pub release_settings: ReleaseSettingsModel,
+    pub ssh: Vec<SshConfig>,
 }
 
 impl AppContext {
     pub async fn new(settings: SettingsModel) -> AppContext {
-        let release_settings = ReleaseSettingsModel::load(&settings).await;
+        let (release_settings, ssh) = ReleaseSettingsModel::load(&settings).await;
         AppContext {
             settings,
             ssh_sessions: Mutex::new(HashMap::new()),
             release_settings,
+            ssh,
         }
     }
 
     pub fn get_ssh_credentials(&self, id: &str) -> Arc<SshCredentials> {
-        let ssh_config = self.release_settings.ssh.iter().find(|ssh| ssh.id == id);
+        let ssh_config = self.ssh.iter().find(|ssh| ssh.id == id);
 
         if ssh_config.is_none() {
             panic!("SSH config with id {} not found", id);

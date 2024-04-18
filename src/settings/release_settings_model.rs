@@ -9,7 +9,6 @@ use super::{SettingsModel, SshConfig, StepModel};
 pub struct ReleaseSettingsModel {
     pub vars: HashMap<String, String>,
     pub var_files: Option<Vec<String>>,
-    pub ssh: Vec<SshConfig>,
     pub steps: Vec<StepModel>,
     pub execute_steps: Vec<String>,
 }
@@ -29,7 +28,7 @@ impl ReleaseSettingsModel {
         false
     }
 
-    pub async fn load(settings: &SettingsModel) -> Self {
+    pub async fn load(settings: &SettingsModel) -> (Self, Vec<SshConfig>) {
         let script_env: Option<&ScriptModel> = None;
         let release_settings = settings.get_file_name(script_env, "release.yaml");
 
@@ -76,6 +75,6 @@ impl ReleaseSettingsModel {
             release_settings.vars.insert(key, value);
         }
 
-        release_settings
+        (release_settings, global_vars.ssh)
     }
 }
