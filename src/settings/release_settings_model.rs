@@ -65,9 +65,9 @@ impl ReleaseSettingsModel {
             }
         }
 
-        let global_vars = settings.read_global_vars().await;
+        let global_settings = settings.read_global_settings().await;
 
-        for (key, value) in global_vars.vars {
+        for (key, value) in global_settings.vars {
             if release_settings.vars.contains_key(key.as_str()) {
                 panic!("Variable {} already defined", key);
             }
@@ -75,6 +75,6 @@ impl ReleaseSettingsModel {
             release_settings.vars.insert(key, value);
         }
 
-        (release_settings, global_vars.ssh)
+        (release_settings, global_settings.ssh)
     }
 }

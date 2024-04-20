@@ -10,7 +10,6 @@ use super::{GlobalSettingsModel, RemoteCommand};
 pub struct SettingsModel {
     working_dir: String,
     home_dir: String, // Script step would use this director as home directory which is going to be resolved by ~ symbol
-    global_vars: String, // Application is going to apply global variables from this file
 }
 
 impl SettingsModel {
@@ -47,17 +46,15 @@ impl SettingsModel {
         FileName::new(result)
     }
 
-    pub async fn read_global_vars(&self) -> GlobalSettingsModel {
-        println!(
-            "Reading global vars from file: {}",
-            self.global_vars.as_str()
-        );
-        let content = tokio::fs::read(self.global_vars.as_str()).await;
+    pub async fn read_global_settings(&self) -> GlobalSettingsModel {
+        let file_name = self.get_global_settings_file_name();
+        println!("Reading global vars from file: {}", file_name.as_str());
+        let content = tokio::fs::read(file_name.as_str()).await;
 
         if let Err(err) = &content {
             panic!(
                 "Can not read global vars from file {}. Err: {}",
-                self.global_vars.as_str(),
+                file_name.as_str(),
                 err
             )
         }
@@ -78,11 +75,25 @@ impl SettingsModel {
                 .replace("~", std::env::var("HOME").unwrap().as_str());
         }
 
+        /*
         if self.global_vars.starts_with("~") {
             self.global_vars = self
                 .global_vars
                 .replace("~", std::env::var("HOME").unwrap().as_str());
         }
+         */
+    }
+
+    fn get_global_settings_file_name(&self) -> FileName {
+        let mut result = self.home_dir.to_string();
+
+        if !result.ends_with(path::MAIN_SEPARATOR) {
+            result.push(path::MAIN_SEPARATOR);
+        }
+
+        result.push_str("settings.yaml");
+
+        FileName::new(result)
     }
 }
 
