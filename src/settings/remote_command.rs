@@ -63,6 +63,7 @@ pub enum RemoteCommandType {
     UploadFile {
         ssh: String,
         file: UploadFileModel,
+        params: Option<HashMap<String, String>>,
     },
 
     PostRequest {
@@ -115,6 +116,7 @@ impl RemoteCommand {
                 return RemoteCommandType::UploadFile {
                     ssh: self.ssh.as_ref().unwrap().clone(),
                     file: self.file.as_ref().unwrap().clone(),
+                    params: self.params.clone(),
                 };
             }
 

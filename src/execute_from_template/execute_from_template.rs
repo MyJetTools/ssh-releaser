@@ -60,8 +60,8 @@ pub async fn execute_from_template(
                 .await;
             }
 
-            settings::RemoteCommandType::UploadFile { ssh, file } => {
-                crate::upload_file::upload_file(&app, &script_model, &ssh, file).await;
+            settings::RemoteCommandType::UploadFile { ssh, params, file } => {
+                crate::upload_file::upload_file(&app, &script_model, params, &ssh, file).await;
             }
 
             settings::RemoteCommandType::PostRequest { ssh, data } => {

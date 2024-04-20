@@ -51,8 +51,8 @@ async fn main() {
                     .await;
                 }
 
-                settings::RemoteCommandType::UploadFile { ssh, file } => {
-                    upload_file::upload_file(&app, &script_model, &ssh, file).await;
+                settings::RemoteCommandType::UploadFile { ssh, params, file } => {
+                    upload_file::upload_file(&app, &script_model, params, &ssh, file).await;
                 }
 
                 settings::RemoteCommandType::PostRequest { ssh, data } => {
