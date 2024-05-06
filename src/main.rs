@@ -26,7 +26,7 @@ async fn main() {
     let app = app::AppContext::new(my_settings).await;
 
     for step in &app.release_settings.steps {
-        if !app.release_settings.execute_me(step) {
+        if !app.settings.execute_me(step) {
             continue;
         }
 

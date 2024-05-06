@@ -23,9 +23,7 @@ pub async fn load_file(
 ) -> (String, FileName) {
     let file_name = app.settings.get_file_name(script_env, file_name);
 
-    println!("Loading file: {}", file_name.as_str());
-
-    let result = tokio::fs::read_to_string(file_name.as_str()).await.unwrap();
+    let result = file_name.load_content_as_string().await;
 
     (result, file_name)
 }

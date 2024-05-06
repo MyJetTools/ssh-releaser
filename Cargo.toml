@@ -25,3 +25,5 @@ hyper = { version = "*", features = ["full"] }
 hyper-util = { version = "*", features = ["tokio", "server", "http1", "http2"] }
 http-body-util = "*"
 bytes = "*"
+
+flurl = { tag = "0.5.2", git = "https://github.com/MyJetTools/fl-url.git" }

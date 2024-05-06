@@ -2,7 +2,7 @@ use std::path;
 
 use crate::{file_name::FileName, script_environment::ScriptEnvironment};
 
-use super::{GlobalSettingsModel, HomeSettingsModel};
+use super::{GlobalSettingsModel, HomeSettingsModel, StepModel};
 
 pub struct SettingsModel {
     pub global_settings: GlobalSettingsModel,
@@ -15,6 +15,10 @@ impl SettingsModel {
         script_env: Option<&impl ScriptEnvironment>,
         file_name: &str,
     ) -> FileName {
+        if file_name.starts_with("http") {
+            return FileName::new(file_name.to_string());
+        }
+
         let mut result = if file_name.starts_with("~") {
             self.global_settings.home_dir.to_string()
         } else if file_name.starts_with(".") {
@@ -41,5 +45,27 @@ impl SettingsModel {
         }
 
         FileName::new(result)
+    }
+
+    pub fn execute_me(&self, step: &StepModel) -> bool {
+        for execute_step in self.home_settings.execute_steps.iter() {
+            if execute_step == "*" {
+                return true;
+            }
+
+            if execute_step == &step.id {
+                return true;
+            }
+
+            if let Some(labels) = step.labels.as_ref() {
+                for label in labels {
+                    if label == execute_step {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        false
     }
 }

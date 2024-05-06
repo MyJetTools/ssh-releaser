@@ -1,3 +1,5 @@
+use flurl::FlUrl;
+
 use crate::file_path::FilePathRef;
 
 #[derive(Clone)]
@@ -25,6 +27,42 @@ impl FileName {
         }
 
         FilePathRef::new(self.0.as_str())
+    }
+
+    pub async fn load_content_as_string(&self) -> String {
+        let content = self.load_content().await;
+        String::from_utf8(content).unwrap()
+    }
+
+    pub async fn load_content(&self) -> Vec<u8> {
+        if !self.as_str().starts_with("http") {
+            println!("Loading content from file: '{}'", self.as_str());
+            let content = tokio::fs::read(self.as_str()).await;
+
+            match content {
+                Ok(content) => {
+                    return content;
+                }
+                Err(e) => {
+                    panic!(
+                        "Error loading content from local file: '{}'. Err: {:?}",
+                        self.as_str(),
+                        e
+                    );
+                }
+            }
+        }
+
+        println!("Loading content from remote resource: '{}'", self.as_str());
+
+        let fl_url = FlUrl::new(self.as_str())
+            .do_not_reuse_connection()
+            .get()
+            .await
+            .unwrap();
+        let result = fl_url.receive_body().await.unwrap();
+
+        result
     }
 }
 

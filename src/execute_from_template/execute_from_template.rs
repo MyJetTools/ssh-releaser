@@ -25,13 +25,7 @@ pub async fn execute_from_template(
 
     let file_name = app.settings.get_file_name(script_env, from_file.as_str());
 
-    println!("Loading template from file: {}", file_name.as_str());
-    let content = match tokio::fs::read_to_string(file_name.as_str()).await {
-        Ok(result) => result,
-        Err(e) => {
-            panic!("Error reading file {}. Err: {:?}", from_file, e)
-        }
-    };
+    let content = file_name.load_content_as_string().await;
 
     let loading_template_env = ReadingFromTemplateEnvironment::new(params);
     let content = crate::scripts::populate_variables_after_loading_from_file(

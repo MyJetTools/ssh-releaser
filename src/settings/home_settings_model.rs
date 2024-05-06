@@ -9,6 +9,7 @@ pub struct HomeSettingsModel {
     pub working_dir: String,
     pub vars: std::collections::HashMap<String, String>,
     pub ssh: Vec<SshConfig>,
+    pub execute_steps: Vec<String>,
 }
 
 impl HomeSettingsModel {
@@ -67,7 +68,7 @@ impl HomeSettingsModel {
             for var_file in var_files {
                 let file_name = settings.get_file_name(script_env, var_file.as_str());
 
-                let content = tokio::fs::read(file_name.as_str()).await.unwrap();
+                let content = file_name.load_content().await;
 
                 let external_vars: ExternalVariablesModel =
                     match serde_yaml::from_slice(content.as_slice()) {
