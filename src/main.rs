@@ -23,9 +23,7 @@ async fn main() {
 
     my_settings.post_process();
 
-    let home_settings = my_settings.load_home_settings().await;
-
-    let app = app::AppContext::new(my_settings, home_settings).await;
+    let app = app::AppContext::new(my_settings).await;
 
     for step in &app.release_settings.steps {
         if !app.release_settings.execute_me(step) {

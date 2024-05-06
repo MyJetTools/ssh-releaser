@@ -7,7 +7,7 @@ use super::{HomeSettingsModel, RemoteCommand};
 #[derive(my_settings_reader::SettingsModel, Debug, Clone, Serialize, Deserialize)]
 pub struct SettingsModel {
     //working_dir: String,
-    home_dir: String, // Script step would use this director as home directory which is going to be resolved by ~ symbol
+    pub home_dir: String, // Script step would use this director as home directory which is going to be resolved by ~ symbol
 }
 
 impl SettingsModel {
