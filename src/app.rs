@@ -4,33 +4,43 @@ use my_ssh::{SshCredentials, SshSession};
 use rust_extensions::StrOrString;
 use tokio::sync::Mutex;
 
-use crate::{file_name::FileName, script_environment::ScriptEnvironment};
+use crate::{script_environment::ScriptEnvironment, settings::SettingsModel};
 
-use std::path;
-
-use crate::settings::{HomeSettingsModel, ReleaseSettingsModel, SettingsModel};
+use crate::settings::{GlobalSettingsModel, ReleaseSettingsModel};
 
 pub struct AppContext {
     ssh_sessions: Mutex<HashMap<String, Arc<SshSession>>>,
     pub settings: SettingsModel,
-    pub home_settings: HomeSettingsModel,
     pub release_settings: ReleaseSettingsModel,
 }
 
 impl AppContext {
-    pub async fn new(settings: SettingsModel) -> AppContext {
-        let home_settings = settings.load_home_settings().await;
-        let release_settings = home_settings.load_release_settings(&settings).await;
+    pub async fn new(global_settings: GlobalSettingsModel) -> AppContext {
+        let home_settings = global_settings.load_home_settings().await;
+
+        let settings = SettingsModel {
+            global_settings,
+            home_settings: home_settings,
+        };
+        let release_settings = settings
+            .home_settings
+            .load_release_settings(&settings)
+            .await;
+
         AppContext {
             settings,
             ssh_sessions: Mutex::new(HashMap::new()),
             release_settings,
-            home_settings,
         }
     }
 
     pub fn get_ssh_credentials(&self, id: &str) -> Arc<SshCredentials> {
-        let ssh_config = self.home_settings.ssh.iter().find(|ssh| ssh.id == id);
+        let ssh_config = self
+            .settings
+            .home_settings
+            .ssh
+            .iter()
+            .find(|ssh| ssh.id == id);
 
         if ssh_config.is_none() {
             panic!("SSH config with id {} not found", id);
@@ -81,38 +91,5 @@ impl AppContext {
         }
 
         panic!("Variable {} not found", name);
-    }
-
-    pub fn get_file_name(
-        &self,
-        script_env: Option<&impl ScriptEnvironment>,
-        file_name: &str,
-    ) -> FileName {
-        let mut result = if file_name.starts_with("~") {
-            self.settings.home_dir.to_string()
-        } else if file_name.starts_with(".") {
-            if let Some(script_env) = script_env {
-                let current_path = script_env.get_current_path().unwrap();
-                current_path.as_str().to_string()
-            } else {
-                self.home_settings.working_dir.to_string()
-            }
-        } else {
-            self.home_settings.working_dir.to_string()
-        };
-
-        if !result.ends_with(path::MAIN_SEPARATOR) {
-            result.push(path::MAIN_SEPARATOR);
-        }
-
-        if file_name.starts_with(path::MAIN_SEPARATOR) {
-            result.push_str(&file_name[1..]);
-        } else if file_name.starts_with("~/") || file_name.starts_with("./") {
-            result.push_str(&file_name[2..]);
-        } else {
-            result.push_str(&file_name);
-        }
-
-        FileName::new(result)
     }
 }

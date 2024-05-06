@@ -1,69 +1,45 @@
 use std::path;
 
-use serde::*;
+use crate::{file_name::FileName, script_environment::ScriptEnvironment};
 
-use super::{HomeSettingsModel, RemoteCommand};
+use super::{GlobalSettingsModel, HomeSettingsModel};
 
-#[derive(my_settings_reader::SettingsModel, Debug, Clone, Serialize, Deserialize)]
 pub struct SettingsModel {
-    //working_dir: String,
-    pub home_dir: String, // Script step would use this director as home directory which is going to be resolved by ~ symbol
+    pub global_settings: GlobalSettingsModel,
+    pub home_settings: HomeSettingsModel,
 }
 
 impl SettingsModel {
-    /*
-    pub async fn read_working_settings(&self) -> HomeSettingsModel {
-        let file_name = self.get_global_settings_file_name();
-        println!("Reading global vars from file: {}", file_name.as_str());
-        let content = tokio::fs::read(file_name.as_str()).await;
-
-        if let Err(err) = &content {
-            panic!(
-                "Can not read global vars from file {}. Err: {}",
-                file_name.as_str(),
-                err
-            )
-        }
-
-        serde_yaml::from_slice(content.as_ref().unwrap()).unwrap()
-    }
-     */
-
-    pub fn post_process(&mut self) {
-        if self.home_dir.starts_with("~") {
-            self.home_dir = self
-                .home_dir
-                .replace("~", std::env::var("HOME").unwrap().as_str());
-        }
-    }
-
-    pub async fn load_home_settings(&self) -> HomeSettingsModel {
-        let mut file_name = self.home_dir.clone();
-        if !file_name.ends_with(path::MAIN_SEPARATOR) {
-            file_name.push(path::MAIN_SEPARATOR);
-        }
-
-        file_name.push_str("settings.yaml");
-
-        println!("Loading home settings from file: {}", file_name.as_str());
-
-        let content = match tokio::fs::read(file_name.as_str()).await {
-            Ok(result) => result,
-            Err(err) => panic!("Can not read file {}. Err: {}", file_name, err),
+    pub fn get_file_name(
+        &self,
+        script_env: Option<&impl ScriptEnvironment>,
+        file_name: &str,
+    ) -> FileName {
+        let mut result = if file_name.starts_with("~") {
+            self.global_settings.home_dir.to_string()
+        } else if file_name.starts_with(".") {
+            if let Some(script_env) = script_env {
+                let current_path = script_env.get_current_path().unwrap();
+                current_path.as_str().to_string()
+            } else {
+                self.home_settings.working_dir.to_string()
+            }
+        } else {
+            self.home_settings.working_dir.to_string()
         };
 
-        let mut result: HomeSettingsModel = serde_yaml::from_slice(content.as_ref()).unwrap();
+        if !result.ends_with(path::MAIN_SEPARATOR) {
+            result.push(path::MAIN_SEPARATOR);
+        }
 
-        result.post_process();
+        if file_name.starts_with(path::MAIN_SEPARATOR) {
+            result.push_str(&file_name[1..]);
+        } else if file_name.starts_with("~/") || file_name.starts_with("./") {
+            result.push_str(&file_name[2..]);
+        } else {
+            result.push_str(&file_name);
+        }
 
-        result
+        FileName::new(result)
     }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct StepModel {
-    pub id: String,
-    pub script: Option<Vec<RemoteCommand>>,
-    pub labels: Option<Vec<String>>,
-    pub from_file: Option<String>,
 }

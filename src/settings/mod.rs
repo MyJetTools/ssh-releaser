@@ -1,5 +1,5 @@
-mod settings_model;
-pub use settings_model::*;
+mod global_settings_model;
+pub use global_settings_model::*;
 mod ssh_config;
 pub use ssh_config::*;
 mod remote_command;
@@ -16,3 +16,5 @@ mod script_model;
 pub use script_model::*;
 mod script_from_settings_model;
 pub use script_from_settings_model::*;
+mod settings_model;
+pub use settings_model::*;

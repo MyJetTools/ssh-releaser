@@ -5,7 +5,7 @@ pub async fn load_file_and_populate_placeholders(
     script_env: Option<&impl ScriptEnvironment>,
     file_name: &str,
 ) -> String {
-    let file_name = app.get_file_name(script_env, file_name);
+    let file_name = app.settings.get_file_name(script_env, file_name);
 
     println!("Loading file: {}", file_name.as_str());
 
@@ -21,7 +21,7 @@ pub async fn load_file(
     script_env: Option<&impl ScriptEnvironment>,
     file_name: &str,
 ) -> (String, FileName) {
-    let file_name = app.get_file_name(script_env, file_name);
+    let file_name = app.settings.get_file_name(script_env, file_name);
 
     println!("Loading file: {}", file_name.as_str());
 

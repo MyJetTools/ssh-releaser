@@ -1,14 +1,8 @@
 use serde::*;
 
-use crate::{
-    file_name::FileName,
-    script_environment::ScriptEnvironment,
-    settings::{ExternalVariablesModel, ScriptModel},
-};
+use crate::settings::{ExternalVariablesModel, ScriptModel};
 
 use super::{ReleaseSettingsModel, SettingsModel, SshConfig};
-
-use std::path;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HomeSettingsModel {
@@ -18,9 +12,10 @@ pub struct HomeSettingsModel {
 }
 
 impl HomeSettingsModel {
+    /*
     fn get_file_name(
         &self,
-        settings: &SettingsModel,
+        settings: &GlobalSettingsModel,
         script_env: Option<&impl ScriptEnvironment>,
         file_name: &str,
     ) -> FileName {
@@ -52,9 +47,11 @@ impl HomeSettingsModel {
         FileName::new(result)
     }
 
+     */
+
     pub async fn load_release_settings(&self, settings: &SettingsModel) -> ReleaseSettingsModel {
         let script_env: Option<&ScriptModel> = None;
-        let release_settings = self.get_file_name(settings, script_env, "release.yaml");
+        let release_settings = settings.get_file_name(script_env, "release.yaml");
 
         let content = tokio::fs::read(release_settings.as_str()).await.unwrap();
 
@@ -68,7 +65,7 @@ impl HomeSettingsModel {
 
         if let Some(var_files) = release_settings.var_files.clone() {
             for var_file in var_files {
-                let file_name = self.get_file_name(settings, script_env, var_file.as_str());
+                let file_name = settings.get_file_name(script_env, var_file.as_str());
 
                 let content = tokio::fs::read(file_name.as_str()).await.unwrap();
 

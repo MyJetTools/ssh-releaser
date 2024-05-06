@@ -1,4 +1,4 @@
-use settings::SettingsModel;
+use settings::GlobalSettingsModel;
 
 use crate::{script_environment::ScriptEnvironment, settings::ScriptModel};
 
@@ -17,7 +17,7 @@ mod upload_file;
 
 #[tokio::main]
 async fn main() {
-    let mut my_settings = SettingsModel::read_from_file(".ssh-releaser".to_string())
+    let mut my_settings = GlobalSettingsModel::read_from_file(".ssh-releaser".to_string())
         .await
         .unwrap();
 

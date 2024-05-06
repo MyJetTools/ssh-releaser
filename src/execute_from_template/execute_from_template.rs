@@ -23,7 +23,7 @@ pub async fn execute_from_template(
         }
     }
 
-    let file_name = app.get_file_name(script_env, from_file.as_str());
+    let file_name = app.settings.get_file_name(script_env, from_file.as_str());
 
     println!("Loading template from file: {}", file_name.as_str());
     let content = match tokio::fs::read_to_string(file_name.as_str()).await {
