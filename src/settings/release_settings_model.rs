@@ -4,7 +4,7 @@ use serde::*;
 
 use crate::settings::{ExternalVariablesModel, ScriptModel};
 
-use super::{SettingsModel, SshConfig, StepModel};
+use super::{HomeSettingsModel, SshConfig, StepModel};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReleaseSettingsModel {
     pub vars: HashMap<String, String>,
@@ -14,23 +14,31 @@ pub struct ReleaseSettingsModel {
 }
 
 impl ReleaseSettingsModel {
-    pub fn execute_me(&self, id: &str) -> bool {
+    pub fn execute_me(&self, step: &StepModel) -> bool {
         for execute_step in self.execute_steps.iter() {
             if execute_step == "*" {
                 return true;
             }
 
-            if execute_step == id {
+            if execute_step == &step.id {
                 return true;
+            }
+
+            if let Some(labels) = step.labels.as_ref() {
+                for label in labels {
+                    if label == execute_step {
+                        return true;
+                    }
+                }
             }
         }
 
         false
     }
 
-    pub async fn load(settings: &SettingsModel) -> (Self, Vec<SshConfig>) {
+    pub async fn load(home_settings: &HomeSettingsModel) -> (Self, Vec<SshConfig>) {
         let script_env: Option<&ScriptModel> = None;
-        let release_settings = settings.get_file_name(script_env, "release.yaml");
+        let release_settings = home_settings.get_file_name(script_env, "release.yaml");
 
         let content = tokio::fs::read(release_settings.as_str()).await.unwrap();
 
@@ -43,7 +51,7 @@ impl ReleaseSettingsModel {
 
         if let Some(var_files) = release_settings.var_files.clone() {
             for var_file in var_files {
-                let file_name = settings.get_file_name(script_env, var_file.as_str());
+                let file_name = home_settings.get_file_name(script_env, var_file.as_str());
 
                 let content = tokio::fs::read(file_name.as_str()).await.unwrap();
 
@@ -65,9 +73,7 @@ impl ReleaseSettingsModel {
             }
         }
 
-        let global_settings = settings.read_global_settings().await;
-
-        for (key, value) in global_settings.vars {
+        for (key, value) in home_settings.vars.clone() {
             if release_settings.vars.contains_key(key.as_str()) {
                 panic!("Variable {} already defined", key);
             }
@@ -75,6 +81,6 @@ impl ReleaseSettingsModel {
             release_settings.vars.insert(key, value);
         }
 
-        (release_settings, global_settings.ssh)
+        (release_settings, home_settings.ssh.clone())
     }
 }

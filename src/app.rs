@@ -6,23 +6,25 @@ use tokio::sync::Mutex;
 
 use crate::{
     script_environment::ScriptEnvironment,
-    settings::{ReleaseSettingsModel, SettingsModel, SshConfig},
+    settings::{HomeSettingsModel, ReleaseSettingsModel, SettingsModel, SshConfig},
 };
 
 pub struct AppContext {
     ssh_sessions: Mutex<HashMap<String, Arc<SshSession>>>,
     pub settings: SettingsModel,
+    pub home_settings: HomeSettingsModel,
     pub release_settings: ReleaseSettingsModel,
     pub ssh: Vec<SshConfig>,
 }
 
 impl AppContext {
-    pub async fn new(settings: SettingsModel) -> AppContext {
-        let (release_settings, ssh) = ReleaseSettingsModel::load(&settings).await;
+    pub async fn new(settings: SettingsModel, home_settings: HomeSettingsModel) -> AppContext {
+        let (release_settings, ssh) = ReleaseSettingsModel::load(&home_settings).await;
         AppContext {
             settings,
             ssh_sessions: Mutex::new(HashMap::new()),
             release_settings,
+            home_settings,
             ssh,
         }
     }

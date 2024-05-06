@@ -51,9 +51,8 @@ async fn get_body(app: &AppContext, script: &ScriptModel, model: &PostDataModel)
     if let Some(body_path) = model.body_path.as_ref() {
         let content =
             crate::scripts::load_file_and_populate_placeholders(app, Some(script), body_path).await;
-        if model.raw_content() {
-            return content;
-        }
+
+        return content;
     }
 
     panic!("Post request must have either 'body' or 'body_path' property");
