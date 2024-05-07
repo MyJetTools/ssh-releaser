@@ -2,54 +2,18 @@ use serde::*;
 
 use crate::settings::{ExternalVariablesModel, ScriptModel};
 
-use super::{ReleaseSettingsModel, SettingsModel, SshConfig};
+use super::{CloudFlareConfig, ReleaseSettingsModel, SettingsModel, SshConfig};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HomeSettingsModel {
     pub working_dir: String,
     pub vars: std::collections::HashMap<String, String>,
     pub ssh: Vec<SshConfig>,
+    pub cloud_flare: Option<Vec<CloudFlareConfig>>,
     pub execute_steps: Vec<String>,
 }
 
 impl HomeSettingsModel {
-    /*
-    fn get_file_name(
-        &self,
-        settings: &GlobalSettingsModel,
-        script_env: Option<&impl ScriptEnvironment>,
-        file_name: &str,
-    ) -> FileName {
-        let mut result = if file_name.starts_with("~") {
-            settings.home_dir.to_string()
-        } else if file_name.starts_with(".") {
-            if let Some(script_env) = script_env {
-                let current_path = script_env.get_current_path().unwrap();
-                current_path.as_str().to_string()
-            } else {
-                self.working_dir.to_string()
-            }
-        } else {
-            self.working_dir.to_string()
-        };
-
-        if !result.ends_with(path::MAIN_SEPARATOR) {
-            result.push(path::MAIN_SEPARATOR);
-        }
-
-        if file_name.starts_with(path::MAIN_SEPARATOR) {
-            result.push_str(&file_name[1..]);
-        } else if file_name.starts_with("~/") || file_name.starts_with("./") {
-            result.push_str(&file_name[2..]);
-        } else {
-            result.push_str(&file_name);
-        }
-
-        FileName::new(result)
-    }
-
-     */
-
     pub async fn load_release_settings(&self, settings: &SettingsModel) -> ReleaseSettingsModel {
         let script_env: Option<&ScriptModel> = None;
         let release_settings = settings.get_file_name(script_env, "release.yaml");

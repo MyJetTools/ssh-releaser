@@ -77,6 +77,13 @@ pub async fn execute_from_template(
                     from_file, params, script_file_path.as_str()
                 )
             }
+
+            settings::RemoteCommandType::WriteCloudFlareDomainARecord(model) => {
+                crate::execute_cloud_flare_write_domain::execute_cloud_flare_write_domain(
+                    &app, model,
+                )
+                .await;
+            }
         }
     }
 }

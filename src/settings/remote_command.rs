@@ -16,6 +16,9 @@ pub struct RemoteCommand {
     pub template_file_name: Option<String>,
     pub name: Option<String>,
     pub params: Option<HashMap<String, String>>,
+    pub domain: Option<String>,
+    pub ip: Option<String>,
+    pub is_proxy: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -81,6 +84,14 @@ pub enum RemoteCommandType {
         script_file_path: FilePath,
         params: Option<HashMap<String, String>>,
     },
+
+    WriteCloudFlareDomainARecord(WriteCloudFlareDomainARecordModel),
+}
+
+pub struct WriteCloudFlareDomainARecordModel {
+    pub domain: String,
+    pub ip: String,
+    pub is_proxy: bool,
 }
 
 impl RemoteCommand {
@@ -166,6 +177,27 @@ impl RemoteCommand {
                     params,
                     script_file_path: script_file_path.as_ref().unwrap().to_owned(),
                 };
+            }
+            "write_cloud_flare_domain" => {
+                if self.domain.is_none() {
+                    panic!("Type 'write_cloud_flare_domain' requires 'domain' property");
+                }
+
+                if self.ip.is_none() {
+                    panic!("Type 'write_cloud_flare_domain' requires 'ip' property");
+                }
+
+                if self.is_proxy.is_none() {
+                    panic!("Type 'write_cloud_flare_domain' requires 'is_proxy' property");
+                }
+
+                let model = WriteCloudFlareDomainARecordModel {
+                    domain: self.domain.as_ref().unwrap().clone(),
+                    ip: self.ip.as_ref().unwrap().clone(),
+                    is_proxy: self.is_proxy.unwrap(),
+                };
+
+                return RemoteCommandType::WriteCloudFlareDomainARecord(model);
             }
             _ => panic!("Unknown remote command type {}", self.r#type),
         }

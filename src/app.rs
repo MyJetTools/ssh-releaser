@@ -6,7 +6,7 @@ use tokio::sync::Mutex;
 
 use crate::{script_environment::ScriptEnvironment, settings::SettingsModel};
 
-use crate::settings::{GlobalSettingsModel, ReleaseSettingsModel};
+use crate::settings::{CloudFlareConfig, GlobalSettingsModel, ReleaseSettingsModel};
 
 pub struct AppContext {
     ssh_sessions: Mutex<HashMap<String, Arc<SshSession>>>,
@@ -91,5 +91,17 @@ impl AppContext {
         }
 
         panic!("Variable {} not found", name);
+    }
+
+    pub fn find_cloud_flare_config(&self, domain_to_write: &str) -> Option<&CloudFlareConfig> {
+        if let Some(configs) = self.settings.home_settings.cloud_flare.as_ref() {
+            for cloud_flare_config in configs {
+                if domain_to_write.ends_with(cloud_flare_config.id.as_str()) {
+                    return Some(cloud_flare_config);
+                }
+            }
+        }
+
+        None
     }
 }

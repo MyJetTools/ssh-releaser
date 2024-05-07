@@ -3,6 +3,7 @@ use settings::GlobalSettingsModel;
 use crate::{script_environment::ScriptEnvironment, settings::ScriptModel};
 
 mod app;
+mod execute_cloud_flare_write_domain;
 mod execute_commands;
 mod execute_from_template;
 mod execute_get_request;
@@ -74,6 +75,13 @@ async fn main() {
                         from_file,
                         script_file_path,
                         params,
+                    )
+                    .await;
+                }
+
+                settings::RemoteCommandType::WriteCloudFlareDomainARecord(model) => {
+                    crate::execute_cloud_flare_write_domain::execute_cloud_flare_write_domain(
+                        &app, model,
                     )
                     .await;
                 }
