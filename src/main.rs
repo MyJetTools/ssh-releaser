@@ -18,6 +18,10 @@ mod upload_file;
 
 #[tokio::main]
 async fn main() {
+    let arg = std::env::args().last().unwrap();
+
+    println!("Executing with argument: {}", arg);
+
     let mut my_settings = GlobalSettingsModel::read_from_file(".ssh-releaser".to_string())
         .await
         .unwrap();
@@ -27,7 +31,7 @@ async fn main() {
     let app = app::AppContext::new(my_settings).await;
 
     for step in &app.release_settings.steps {
-        if !app.settings.execute_me(step) {
+        if !app.settings.execute_me(step, arg.as_str()) {
             continue;
         }
 

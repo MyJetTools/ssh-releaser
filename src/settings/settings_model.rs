@@ -47,8 +47,8 @@ impl SettingsModel {
         FileName::new(result)
     }
 
-    pub fn execute_me(&self, step: &StepModel) -> bool {
-        for execute_step in self.home_settings.execute_steps.iter() {
+    pub fn execute_me(&self, step: &StepModel, arg: &str) -> bool {
+        for execute_step in arg.split(';') {
             if execute_step == "*" {
                 return true;
             }

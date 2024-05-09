@@ -10,7 +10,6 @@ pub struct HomeSettingsModel {
     pub vars: std::collections::HashMap<String, String>,
     pub ssh: Vec<SshConfig>,
     pub cloud_flare: Option<Vec<CloudFlareConfig>>,
-    pub execute_steps: Vec<String>,
 }
 
 impl HomeSettingsModel {
