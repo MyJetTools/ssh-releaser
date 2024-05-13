@@ -18,5 +18,9 @@ pub fn build(app: &Arc<AppContext>) -> ControllersMiddleware {
         super::release_data_controller::ExecuteAction::new(app.clone()).into(),
     );
 
+    result.register_get_action(
+        super::release_data_controller::GetLogsInfoAction::new(app.clone()).into(),
+    );
+
     result
 }

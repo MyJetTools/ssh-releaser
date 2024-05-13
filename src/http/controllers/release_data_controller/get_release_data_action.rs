@@ -33,7 +33,8 @@ async fn handle_request(
     input_data: GetReleaseDataHttpInput,
     _ctx: &HttpContext,
 ) -> Result<HttpOkResult, HttpFailResult> {
-    let envs = crate::execution::get_execution_args_list(&action.app, &input_data.env).await;
+    let logs = Arc::new(crate::execution::ExecuteLogsContainer::new());
+    let envs = crate::execution::get_execution_args_list(&action.app, &input_data.env, logs).await;
     let result = ReleaseDataHttpResponse {
         ids: envs.ids,
         labels: envs.labels,

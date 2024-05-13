@@ -21,11 +21,12 @@ pub async fn execute_post_request(
     let ssh_credentials = env_settings.get_ssh_credentials(ssh);
 
     let url =
-        scripts::populate_variables(env_settings, Some(script), post_request.url.as_str()).await;
+        scripts::populate_variables(env_settings, Some(script), post_request.url.as_str(), logs)
+            .await?;
 
     let remote_uri = Uri::from_str(url.as_str()).unwrap();
 
-    let content = get_body(env_settings, script, &post_request).await;
+    let content = get_body(env_settings, script, &post_request, logs).await?;
 
     //    println!("Content: {}", content);
 
@@ -46,14 +47,15 @@ async fn get_body(
     env_settings: &EnvContext,
     script: &ScriptModel,
     model: &PostDataModel,
-) -> String {
+    logs: &Arc<ExecuteLogsContainer>,
+) -> Result<String, ExecuteCommandError> {
     if let Some(body) = model.body.as_ref() {
         if model.raw_content() {
-            return body.clone();
+            return Ok(body.clone());
         }
-        return crate::scripts::populate_variables(env_settings, Some(script), body)
-            .await
-            .to_string();
+        let result =
+            crate::scripts::populate_variables(env_settings, Some(script), body, logs).await?;
+        return Ok(result.to_string());
     }
 
     if let Some(body_path) = model.body_path.as_ref() {
@@ -61,11 +63,16 @@ async fn get_body(
             env_settings,
             Some(script),
             body_path,
+            logs,
         )
         .await;
 
         return content;
     }
 
-    panic!("Post request must have either 'body' or 'body_path' property");
+    Err(
+        "Post request must have either 'body' or 'body_path' property"
+            .to_string()
+            .into(),
+    )
 }

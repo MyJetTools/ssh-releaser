@@ -3,7 +3,6 @@ const selectedAppStorageName = "selectedApp";
 
 class Apps {
 
-
     static async init() {
         let selectedEnv = Envs.getSelected();
 
@@ -33,12 +32,12 @@ class Apps {
 
         let selectedApp = this.getSelectedApp(env);
 
-        let selectedBadges: any = this.getSelectedBadges(env);
+        let selectedLabels: any = this.getSelectedLabels(env);
 
         console.log(selectedApp);
 
 
-        return HtmlUtils.renderSplitTable("300px", "auto", () => {
+        return HtmlUtils.render3Table("300px", "auto", "60px", () => {
 
             let renderer = '<select id="app" class="form-select"  onchange="Apps.saveSelected()">';
             renderer += '<option value="---">---</option>';
@@ -64,7 +63,7 @@ class Apps {
 
                     let myClass = "text-bg-light";
 
-                    if (selectedBadges.includes(itm)) {
+                    if (selectedLabels.includes(itm)) {
                         myClass = "text-bg-dark";
                     }
 
@@ -73,6 +72,10 @@ class Apps {
                 }
 
                 return rendered;
+            },
+
+            () => {
+                return `<button class="btn btn-primary" onclick="Apps.onExecute()">Execute</button>`;
             }
         );
 
@@ -100,7 +103,13 @@ class Apps {
 
     static getSelectedApp(env: string): string {
         let storageValue = this.getFromStorageAsObject(selectedAppStorageName);
-        return storageValue[env];
+        let result = storageValue[env];
+
+        if (result == '---') {
+            return undefined;
+        }
+
+        return result;
     }
 
     static getFromStorageAsObject(name: string): {} {
@@ -118,7 +127,7 @@ class Apps {
     }
 
 
-    static getSelectedBadges(env: string): string[] {
+    static getSelectedLabels(env: string): string[] {
 
         let valueFromStorage = this.getFromStorageAsObject("selectedLabels");
 
@@ -167,6 +176,46 @@ class Apps {
 
         let header = document.getElementById("header");
         header.innerHTML = this.generateHtml(env);
+    }
+
+
+    static getSelectedToExecute(env: string): string[] {
+
+        let result = [];
+
+        let app = this.getSelectedApp(env);
+
+        if (app) {
+            result.push(app);
+        }
+
+
+        for (let label of this.getSelectedLabels(env)) {
+            result.push(label);
+        }
+
+
+        return result;
+
+    }
+
+
+    static onExecute() {
+
+        let env = Envs.getSelected();
+        let args = this.getSelectedToExecute(env);
+
+        console.log(env);
+        console.log(args);
+
+        $.ajax({ method: "POST", url: "/api/release/execute", data: { env: env, arg: args[0] } }).then(function (data) {
+            console.log(data);
+
+            AppContext.selectedProcess = data;
+        });
+
+
+
     }
 
 

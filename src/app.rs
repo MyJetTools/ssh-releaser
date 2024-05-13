@@ -10,7 +10,6 @@ pub const APP_VERSION: &'static str = env!("CARGO_PKG_VERSION");
 pub struct AppContext {
     pub global_settings: GlobalSettingsModel,
     pub app_states: Arc<AppStates>,
-
     pub containers: Mutex<HashMap<String, Arc<ExecuteLogsContainer>>>,
 }
 
@@ -26,5 +25,10 @@ impl AppContext {
     pub async fn add_container(&self, container: Arc<ExecuteLogsContainer>) {
         let mut containers = self.containers.lock().await;
         containers.insert(container.id.clone(), container);
+    }
+
+    pub async fn get_container(&self, id: &str) -> Option<Arc<ExecuteLogsContainer>> {
+        let containers = self.containers.lock().await;
+        containers.get(id).cloned()
     }
 }

@@ -1,8 +1,11 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 use serde::*;
 
-use crate::file_name::FileName;
+use crate::{
+    execution::{ExecuteCommandError, ExecuteLogsContainer},
+    file_name::FileName,
+};
 
 use super::{ExternalVariablesModel, StepModel};
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -13,10 +16,18 @@ pub struct ReleaseSettingsModel {
 }
 
 impl ReleaseSettingsModel {
-    pub async fn load(release_file_name: FileName) -> Self {
-        let content = tokio::fs::read(release_file_name.as_str()).await.unwrap();
-        let release_settings: Self = serde_yaml::from_slice(content.as_slice()).unwrap();
-        release_settings
+    pub async fn load(release_file_name: FileName) -> Result<Self, ExecuteCommandError> {
+        let content = tokio::fs::read(release_file_name.as_str()).await?;
+        let release_settings: Result<Self, _> = serde_yaml::from_slice(content.as_slice());
+
+        match release_settings {
+            Ok(result) => Ok(result),
+            Err(err) => Err(ExecuteCommandError::JustError(format!(
+                "can not load yaml: {}. Err: {}",
+                release_file_name.as_str(),
+                err
+            ))),
+        }
 
         /*
         let script_env: Option<&ScriptModel> = None;
@@ -73,7 +84,8 @@ impl ReleaseSettingsModel {
     pub async fn load_vars_from_files(
         &self,
         get_file_name: impl Fn(&str) -> FileName,
-    ) -> HashMap<String, ExternalVariablesModel> {
+        logs: &Arc<ExecuteLogsContainer>,
+    ) -> Result<HashMap<String, ExternalVariablesModel>, ExecuteCommandError> {
         //  let script_env: Option<&ScriptModel> = None;
 
         let mut result = HashMap::new();
@@ -83,7 +95,7 @@ impl ReleaseSettingsModel {
 
                 let file_name = get_file_name(var_file);
 
-                let content = file_name.load_content().await;
+                let content = file_name.load_content(logs).await?;
 
                 let external_vars: ExternalVariablesModel =
                     match serde_yaml::from_slice(content.as_slice()) {
@@ -97,6 +109,6 @@ impl ReleaseSettingsModel {
             }
         }
 
-        result
+        Ok(result)
     }
 }

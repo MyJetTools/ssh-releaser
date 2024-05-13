@@ -29,21 +29,28 @@ pub struct EnvContext {
 }
 
 impl EnvContext {
-    pub async fn new(home_dir: String, home_settings: HomeSettingsModel) -> Self {
+    pub async fn new(
+        home_dir: String,
+        home_settings: HomeSettingsModel,
+        logs: &Arc<ExecuteLogsContainer>,
+    ) -> Result<Self, ExecuteCommandError> {
         // let release_settings = settings.get_file_name(script_env, "release.yaml");
 
         let file_name = home_settings.get_release_yaml_file_name();
 
-        let release_settings = ReleaseSettingsModel::load(file_name).await;
+        let release_settings = ReleaseSettingsModel::load(file_name).await?;
 
         let vars_from_files = release_settings
-            .load_vars_from_files(|file_name| {
-                let script_env: Option<&ScriptModel> = None;
-                get_file_name(&home_dir, &home_settings.working_dir, script_env, file_name)
-            })
-            .await;
+            .load_vars_from_files(
+                |file_name| {
+                    let script_env: Option<&ScriptModel> = None;
+                    get_file_name(&home_dir, &home_settings.working_dir, script_env, file_name)
+                },
+                logs,
+            )
+            .await?;
 
-        Self {
+        let result = Self {
             home_dir,
             working_dir: home_settings.working_dir,
             env_variables: EnvVariables::new(
@@ -56,7 +63,9 @@ impl EnvContext {
             ssh_sessions: Mutex::new(HashMap::new()),
             cloud_flare: home_settings.cloud_flare,
             steps: release_settings.steps,
-        }
+        };
+
+        Ok(result)
     }
 
     pub fn get_file_name(

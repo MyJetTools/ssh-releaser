@@ -22,13 +22,14 @@ pub async fn execute_commands(
             env_settings,
             Some(script_model),
             command.name.as_str(),
+            logs,
         )
-        .await;
+        .await?;
 
         logs.write_log(format!("Executing SSH command: {}", command_name.as_str()))
             .await;
 
-        let command_to_exec = get_command(env_settings, script_model, command).await;
+        let command_to_exec = get_command(env_settings, script_model, command, logs).await?;
 
         logs.write_log(format!(">> {}", command_to_exec)).await;
 
@@ -54,15 +55,17 @@ async fn get_command(
     env_settings: &EnvContext,
     script_model: &ScriptModel,
     command: &RemoteCommandItem,
-) -> String {
+    logs: &Arc<ExecuteLogsContainer>,
+) -> Result<String, ExecuteCommandError> {
     if let Some(command_to_execute) = &command.exec {
         let command_to_execute = crate::scripts::populate_variables(
             env_settings,
             Some(script_model),
             command_to_execute,
+            logs,
         )
-        .await;
-        return command_to_execute.to_string();
+        .await?;
+        return Ok(command_to_execute.to_string());
     }
 
     if let Some(exec_from_file) = &command.exec_from_file {
@@ -70,13 +73,15 @@ async fn get_command(
             env_settings,
             Some(script_model),
             exec_from_file,
+            logs,
         )
         .await;
         return content;
     }
 
-    panic!(
+    return Err(format!(
         "Command {} must have either 'exec' or 'exec_from_file' property",
         command.name
     )
+    .into());
 }

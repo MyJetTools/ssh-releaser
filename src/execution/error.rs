@@ -1,4 +1,5 @@
 use cloudflare_sdk::CloudFlareError;
+use flurl::FlUrlError;
 use rust_extensions::StrOrString;
 
 #[derive(Debug)]
@@ -7,6 +8,26 @@ pub enum ExecuteCommandError {
     CloudFlareError(CloudFlareError),
     HttpOverSshClientError(crate::http_over_ssh::HttpClientError),
     SshSessionError(my_ssh::SshSessionError),
+    FlUrlError(FlUrlError),
+    IoError(std::io::Error),
+}
+
+impl From<std::string::FromUtf8Error> for ExecuteCommandError {
+    fn from(error: std::string::FromUtf8Error) -> Self {
+        ExecuteCommandError::JustError(error.to_string())
+    }
+}
+
+impl From<std::io::Error> for ExecuteCommandError {
+    fn from(error: std::io::Error) -> Self {
+        ExecuteCommandError::IoError(error)
+    }
+}
+
+impl From<FlUrlError> for ExecuteCommandError {
+    fn from(error: FlUrlError) -> Self {
+        ExecuteCommandError::FlUrlError(error)
+    }
 }
 
 impl From<my_ssh::SshSessionError> for ExecuteCommandError {

@@ -6,18 +6,34 @@ use crate::{
     settings::{self, ScriptModel},
 };
 
-pub async fn execute(app: &AppContext, env: &str, args: &str) -> Arc<ExecuteLogsContainer> {
-    let logs = Arc::new(ExecuteLogsContainer::new());
-    let env_ctx = app.global_settings.get_env_settings(env).await;
+pub async fn execute(
+    app: Arc<AppContext>,
+    env: String,
+    args: String,
+    logs: Arc<ExecuteLogsContainer>,
+) {
+    let env_ctx = match app.global_settings.get_env_settings(&env, &logs).await {
+        Ok(env_ctx) => env_ctx,
+        Err(err) => {
+            logs.write_error(err).await;
+            return;
+        }
+    };
 
     for step in env_ctx.get_execution_steps() {
-        if !env_ctx.execute_me(step, args) {
+        if !env_ctx.execute_me(step, &args) {
             continue;
         }
 
         logs.start_process(step.id.to_string()).await;
 
-        let script_model = ScriptModel::from_step(step, &env_ctx).await;
+        let script_model = match ScriptModel::from_step(step, &env_ctx, &logs).await {
+            Ok(script_model) => script_model,
+            Err(err) => {
+                logs.write_error(err).await;
+                return;
+            }
+        };
 
         for remote_command in script_model.get_commands() {
             if let Some(name) = remote_command.name.as_ref() {
@@ -32,7 +48,7 @@ pub async fn execute(app: &AppContext, env: &str, args: &str) -> Arc<ExecuteLogs
                             .await
                     {
                         logs.write_error(err).await;
-                        return logs;
+                        return;
                     }
                 }
 
@@ -41,7 +57,7 @@ pub async fn execute(app: &AppContext, env: &str, args: &str) -> Arc<ExecuteLogs
                         upload_file(&env_ctx, &script_model, params, &ssh, file, &logs).await
                     {
                         logs.write_error(err).await;
-                        return logs;
+                        return;
                     }
                 }
 
@@ -50,7 +66,7 @@ pub async fn execute(app: &AppContext, env: &str, args: &str) -> Arc<ExecuteLogs
                         execute_post_request(&env_ctx, &script_model, &ssh, &data, &logs).await
                     {
                         logs.write_error(err).await;
-                        return logs;
+                        return;
                     }
                 }
 
@@ -59,7 +75,7 @@ pub async fn execute(app: &AppContext, env: &str, args: &str) -> Arc<ExecuteLogs
                         execute_get_request(&env_ctx, &script_model, &ssh, &data, &logs).await
                     {
                         logs.write_error(err).await;
-                        return logs;
+                        return;
                     }
                 }
                 settings::RemoteCommandType::FromTemplate {
@@ -79,7 +95,7 @@ pub async fn execute(app: &AppContext, env: &str, args: &str) -> Arc<ExecuteLogs
                         Ok(_) => {}
                         Err(err) => {
                             logs.write_error(err).await;
-                            return logs;
+                            return;
                         }
                     }
                 }
@@ -89,13 +105,11 @@ pub async fn execute(app: &AppContext, env: &str, args: &str) -> Arc<ExecuteLogs
                         Ok(_) => {}
                         Err(err) => {
                             logs.write_error(err).await;
-                            return logs;
+                            return;
                         }
                     }
                 }
             }
         }
     }
-
-    logs
 }

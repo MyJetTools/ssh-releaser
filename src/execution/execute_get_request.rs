@@ -21,7 +21,8 @@ pub async fn execute_get_request(
     let ssh_credentials = env_settings.get_ssh_credentials(ssh);
 
     let url =
-        scripts::populate_variables(env_settings, Some(script), get_request.url.as_str()).await;
+        scripts::populate_variables(env_settings, Some(script), get_request.url.as_str(), logs)
+            .await?;
 
     let remote_uri = Uri::from_str(url.as_str()).unwrap();
 

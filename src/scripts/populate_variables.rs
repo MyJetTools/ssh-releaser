@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use rust_extensions::StrOrString;
 
 use crate::{environment::EnvContext, execution::*};
@@ -11,11 +13,12 @@ pub async fn populate_variables<'s>(
     settings: &'s EnvContext,
     script_env: Option<&impl ScriptEnvironment>,
     src: &'s str,
-) -> StrOrString<'s> {
+    logs: &Arc<ExecuteLogsContainer>,
+) -> Result<StrOrString<'s>, ExecuteCommandError> {
     let index = src.find(PLACEHOLDER_OPEN_TOKEN);
 
     if index.is_none() {
-        return src.into();
+        return Ok(src.into());
     }
     let mut result = String::new();
 
@@ -46,8 +49,9 @@ pub async fn populate_variables<'s>(
                     script_env,
                     placeholder_to_process,
                     populate_placeholders_after_reading_from_file,
+                    logs,
                 )
-                .await;
+                .await?;
 
                 if processing.has_url_encoded() {
                     let url_encoded = super::convert_url_encoded(content.as_str());
@@ -59,7 +63,7 @@ pub async fn populate_variables<'s>(
         }
     }
 
-    result.into()
+    Ok(result.into())
 }
 
 async fn get_placeholder_content<'s>(
@@ -67,10 +71,12 @@ async fn get_placeholder_content<'s>(
     script_env: Option<&'s impl ScriptEnvironment>,
     placeholder: &str,
     populate_placeholders_after_reading_from_file: bool,
-) -> StrOrString<'s> {
+    logs: &Arc<ExecuteLogsContainer>,
+) -> Result<StrOrString<'s>, ExecuteCommandError> {
     if placeholder.starts_with("/") || placeholder.starts_with("~") || placeholder.starts_with(".")
     {
-        let (mut content, _) = crate::scripts::load_file(settings, script_env, placeholder).await;
+        let (mut content, _) =
+            crate::scripts::load_file(settings, script_env, placeholder, logs).await?;
         if populate_placeholders_after_reading_from_file {
             content = super::populate_variables_after_loading_from_file(
                 settings,
@@ -80,7 +86,7 @@ async fn get_placeholder_content<'s>(
             );
         }
 
-        return content.into();
+        return Ok(content.into());
     }
 
     if placeholder.starts_with("$") {
@@ -89,8 +95,8 @@ async fn get_placeholder_content<'s>(
         result.push_str(placeholder[1..].as_ref());
         result.push('}');
 
-        return result.into();
+        return Ok(result.into());
     }
 
-    settings.get_env_variable(script_env, placeholder)
+    Ok(settings.get_env_variable(script_env, placeholder))
 }

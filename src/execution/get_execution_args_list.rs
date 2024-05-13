@@ -1,12 +1,32 @@
+use std::sync::Arc;
+
 use crate::app::AppContext;
+
+use super::ExecuteLogsContainer;
 
 pub struct ExecutionArgsList {
     pub ids: Vec<String>,
     pub labels: Vec<String>,
+    pub err: Option<String>,
 }
 
-pub async fn get_execution_args_list(app: &AppContext, env: &str) -> ExecutionArgsList {
-    let env_settings = app.global_settings.get_env_settings(env).await;
+pub async fn get_execution_args_list(
+    app: &AppContext,
+    env: &str,
+    logs: Arc<ExecuteLogsContainer>,
+) -> ExecutionArgsList {
+    let env_settings = match app.global_settings.get_env_settings(env, &logs).await {
+        Ok(env_settings) => env_settings,
+        Err(err) => {
+            let err_str = format!("Error getting env settings: {:?}", err);
+            logs.write_error(err).await;
+            return ExecutionArgsList {
+                ids: Vec::new(),
+                labels: Vec::new(),
+                err: Some(err_str),
+            };
+        }
+    };
 
     let mut ids = Vec::new();
 
@@ -27,5 +47,6 @@ pub async fn get_execution_args_list(app: &AppContext, env: &str) -> ExecutionAr
     ExecutionArgsList {
         ids,
         labels: labels_result,
+        err: None,
     }
 }

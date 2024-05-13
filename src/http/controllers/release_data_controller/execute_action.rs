@@ -1,9 +1,6 @@
 use std::sync::Arc;
 
-use my_http_server::{
-    macros::{MyHttpInput, MyHttpObjectStructure},
-    HttpContext, HttpFailResult, HttpOkResult, HttpOutput,
-};
+use my_http_server::{macros::MyHttpInput, HttpContext, HttpFailResult, HttpOkResult, HttpOutput};
 
 use crate::app::AppContext;
 
@@ -15,7 +12,7 @@ use crate::app::AppContext;
     summary: "Execute release script",
     input_data: ExecuteInputData,
     result:[
-        {status_code: 200, description: "Rows", model: "ReleaseDataHttpResponse"},
+        {status_code: 200, description: "Rows", model: "String"},
     ]
 )]
 pub struct ExecuteAction {
@@ -33,12 +30,19 @@ async fn handle_request(
     input_data: ExecuteInputData,
     _ctx: &HttpContext,
 ) -> Result<HttpOkResult, HttpFailResult> {
-    let container = crate::execution::execute(&action.app, &input_data.env, &input_data.arg).await;
+    let logs = Arc::new(crate::execution::ExecuteLogsContainer::new());
 
-    let result = container.id.clone();
+    action.app.add_container(logs.clone()).await;
 
-    action.app.add_container(container).await;
-    HttpOutput::as_text(result).into_ok_result(false)
+    let logs_spawned = logs.clone();
+
+    let app = action.app.clone();
+
+    tokio::spawn(async move {
+        crate::execution::execute(app, input_data.env, input_data.arg, logs_spawned).await;
+    });
+
+    HttpOutput::as_text(logs.id.clone()).into_ok_result(false)
 }
 
 #[derive(MyHttpInput)]
@@ -48,9 +52,4 @@ pub struct ExecuteInputData {
 
     #[http_form_data(description = "Arguments")]
     pub arg: String,
-}
-
-#[derive(serde::Serialize, Debug, MyHttpObjectStructure)]
-pub struct ReleaseDataHttpResponse {
-    pub html: Vec<String>,
 }

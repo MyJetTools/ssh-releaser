@@ -1,8 +1,11 @@
-use std::{collections::BTreeMap, path};
+use std::{collections::BTreeMap, path, sync::Arc};
 
 use serde::*;
 
-use crate::environment::EnvContext;
+use crate::{
+    environment::EnvContext,
+    execution::{ExecuteCommandError, ExecuteLogsContainer},
+};
 
 use super::{HomeSettingsModel, RemoteCommand};
 
@@ -48,7 +51,11 @@ impl GlobalSettingsModel {
         }
     }
      */
-    pub async fn get_env_settings(&self, env: &str) -> EnvContext {
+    pub async fn get_env_settings(
+        &self,
+        env: &str,
+        logs: &Arc<ExecuteLogsContainer>,
+    ) -> Result<EnvContext, ExecuteCommandError> {
         let home_dir = match self.envs.get(env) {
             Some(home_dir) => home_dir,
             None => panic!("There is not environment {} in global settings", env),
@@ -62,7 +69,7 @@ impl GlobalSettingsModel {
 
         let home_settings = load_home_settings(home_dir.as_str()).await;
 
-        EnvContext::new(home_dir, home_settings).await
+        EnvContext::new(home_dir, home_settings, logs).await
     }
 
     /*

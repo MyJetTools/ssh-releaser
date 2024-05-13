@@ -19,15 +19,17 @@ pub async fn upload_file(
         env_settings,
         Some(script_model),
         &file.local_file.as_str(),
+        logs,
     )
-    .await;
+    .await?;
 
     let mut content = crate::scripts::load_file_and_populate_placeholders(
         env_settings,
         Some(script_model),
         local_file.as_str(),
+        logs,
     )
-    .await;
+    .await?;
 
     if let Some(params) = params {
         let env = UploadFileEnvironment::new(params);
@@ -45,8 +47,9 @@ pub async fn upload_file(
         env_settings,
         Some(script_model),
         file.remote_file.as_str(),
+        logs,
     )
-    .await;
+    .await?;
 
     logs.write_log(format!(
         "Uploading file to remote path: {}",

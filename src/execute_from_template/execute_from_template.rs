@@ -19,14 +19,15 @@ pub async fn execute_from_template(
 
     if let Some(params) = params.as_mut() {
         for (key, value) in params.clone() {
-            let value = crate::scripts::populate_variables(env_settings, script_env, &value).await;
+            let value =
+                crate::scripts::populate_variables(env_settings, script_env, &value, logs).await?;
             params.insert(key.clone(), value.to_string());
         }
     }
 
     let file_name = env_settings.get_file_name(script_env, from_file.as_str());
 
-    let content = file_name.load_content_as_string().await;
+    let content = file_name.load_content_as_string(logs).await?;
 
     let loading_template_env = ReadingFromTemplateEnvironment::new(params);
     let content = crate::scripts::populate_variables_after_loading_from_file(
@@ -36,7 +37,7 @@ pub async fn execute_from_template(
         "*{",
     );
 
-    let script_model = ScriptModel::from_content(content.as_str(), script_file_path.as_ref());
+    let script_model = ScriptModel::from_content(content.as_str(), script_file_path.as_ref())?;
 
     for remote_command in script_model.get_commands() {
         println!("-----------------");

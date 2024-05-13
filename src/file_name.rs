@@ -1,6 +1,11 @@
+use std::sync::Arc;
+
 use flurl::FlUrl;
 
-use crate::file_path::FilePathRef;
+use crate::{
+    execution::{ExecuteCommandError, ExecuteLogsContainer},
+    file_path::FilePathRef,
+};
 
 #[derive(Clone)]
 pub struct FileName(String);
@@ -29,40 +34,52 @@ impl FileName {
         FilePathRef::new(self.0.as_str())
     }
 
-    pub async fn load_content_as_string(&self) -> String {
-        let content = self.load_content().await;
-        String::from_utf8(content).unwrap()
+    pub async fn load_content_as_string(
+        &self,
+        logs: &Arc<ExecuteLogsContainer>,
+    ) -> Result<String, ExecuteCommandError> {
+        let content = self.load_content(logs).await?;
+        Ok(String::from_utf8(content)?)
     }
 
-    pub async fn load_content(&self) -> Vec<u8> {
+    pub async fn load_content(
+        &self,
+        logs: &Arc<ExecuteLogsContainer>,
+    ) -> Result<Vec<u8>, ExecuteCommandError> {
         if !self.as_str().starts_with("http") {
-            println!("Loading content from file: '{}'", self.as_str());
+            logs.write_log(format!("Loading content from file: '{}'", self.as_str()))
+                .await;
             let content = tokio::fs::read(self.as_str()).await;
 
             match content {
                 Ok(content) => {
-                    return content;
+                    return Ok(content);
                 }
                 Err(e) => {
-                    panic!(
+                    return Err(format!(
                         "Error loading content from local file: '{}'. Err: {:?}",
                         self.as_str(),
                         e
-                    );
+                    )
+                    .into());
                 }
             }
         }
 
-        println!("Loading content from remote resource: '{}'", self.as_str());
+        logs.write_log(format!(
+            "Loading content from remote resource: '{}'",
+            self.as_str()
+        ))
+        .await;
 
         let fl_url = FlUrl::new(self.as_str())
             .do_not_reuse_connection()
             .get()
             .await
             .unwrap();
-        let result = fl_url.receive_body().await.unwrap();
+        let result = fl_url.receive_body().await?;
 
-        result
+        Ok(result)
     }
 }
 

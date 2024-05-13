@@ -1,29 +1,36 @@
+use std::sync::Arc;
+
 use crate::{environment::EnvContext, execution::*, file_name::FileName};
 
 pub async fn load_file_and_populate_placeholders(
     settings: &EnvContext,
     script_env: Option<&impl ScriptEnvironment>,
     file_name: &str,
-) -> String {
+    logs: &Arc<ExecuteLogsContainer>,
+) -> Result<String, ExecuteCommandError> {
     let file_name = settings.get_file_name(script_env, file_name);
 
-    println!("Loading file: {}", file_name.as_str());
+    logs.write_log(format!("Loading file: {}", file_name.as_str()))
+        .await;
 
     let content = tokio::fs::read_to_string(file_name.as_str()).await.unwrap();
 
-    return crate::scripts::populate_variables(settings, script_env, content.as_str())
-        .await
+    let result = crate::scripts::populate_variables(settings, script_env, content.as_str(), logs)
+        .await?
         .to_string();
+
+    Ok(result)
 }
 
 pub async fn load_file(
     settings: &EnvContext,
     script_env: Option<&impl ScriptEnvironment>,
     file_name: &str,
-) -> (String, FileName) {
+    logs: &Arc<ExecuteLogsContainer>,
+) -> Result<(String, FileName), ExecuteCommandError> {
     let file_name = settings.get_file_name(script_env, file_name);
 
-    let result = file_name.load_content_as_string().await;
+    let result = file_name.load_content_as_string(logs).await?;
 
-    (result, file_name)
+    Ok((result, file_name))
 }

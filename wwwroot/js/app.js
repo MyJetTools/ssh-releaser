@@ -7,6 +7,15 @@ class HtmlUtils {
         result += rightPanel();
         return result + `</td></tr></table>`;
     }
+    static render3Table(leftWidth, middleWidth, rightWidth, leftPanel, middlePanel, rightPanel) {
+        let result = `<table style="width:100%"><tr><td style="width:${leftWidth}">`;
+        result += leftPanel();
+        result += `</td><td style="width:${middleWidth}">`;
+        result += middlePanel();
+        result += `</td><td style="width:${rightWidth}">`;
+        result += rightPanel();
+        return result + `</td></tr></table>`;
+    }
 }
 
 // app.js
@@ -19,6 +28,13 @@ setTimeout(function () {
         Apps.init();
     });
 }, 100);
+setInterval(function () {
+    if (AppContext.selectedProcess) {
+        $.ajax({ url: "/api/release/logs", data: { id: AppContext.selectedProcess } }).then(function (data) {
+            document.getElementById("content").innerHTML = data;
+        });
+    }
+}, 1000);
 
 // envs.js
 class Envs {
@@ -84,9 +100,9 @@ class Apps {
     }
     static generateHtml(env) {
         let selectedApp = this.getSelectedApp(env);
-        let selectedBadges = this.getSelectedBadges(env);
+        let selectedLabels = this.getSelectedLabels(env);
         console.log(selectedApp);
-        return HtmlUtils.renderSplitTable("300px", "auto", () => {
+        return HtmlUtils.render3Table("300px", "auto", "60px", () => {
             let renderer = '<select id="app" class="form-select"  onchange="Apps.saveSelected()">';
             renderer += '<option value="---">---</option>';
             if (selectedApp == "*") {
@@ -108,12 +124,14 @@ class Apps {
             let rendered = "";
             for (let itm of AppContext.labels) {
                 let myClass = "text-bg-light";
-                if (selectedBadges.includes(itm)) {
+                if (selectedLabels.includes(itm)) {
                     myClass = "text-bg-dark";
                 }
                 rendered += `<span data-badge="${itm}" class="badge ${myClass}" style="cursor:pointer" onclick="Apps.onBadgeClick(this)">${itm}</span>`;
             }
             return rendered;
+        }, () => {
+            return `<button class="btn btn-primary" onclick="Apps.onExecute()">Execute</button>`;
         });
     }
     static saveSelected() {
@@ -129,7 +147,11 @@ class Apps {
     }
     static getSelectedApp(env) {
         let storageValue = this.getFromStorageAsObject(selectedAppStorageName);
-        return storageValue[env];
+        let result = storageValue[env];
+        if (result == '---') {
+            return undefined;
+        }
+        return result;
     }
     static getFromStorageAsObject(name) {
         let storageValue = localStorage.getItem(name);
@@ -143,7 +165,7 @@ class Apps {
             return {};
         }
     }
-    static getSelectedBadges(env) {
+    static getSelectedLabels(env) {
         let valueFromStorage = this.getFromStorageAsObject("selectedLabels");
         let badges = valueFromStorage[env];
         if (!badges) {
@@ -176,6 +198,27 @@ class Apps {
         localStorage.setItem("selectedLabels", JSON.stringify(valueFromStorage));
         let header = document.getElementById("header");
         header.innerHTML = this.generateHtml(env);
+    }
+    static getSelectedToExecute(env) {
+        let result = [];
+        let app = this.getSelectedApp(env);
+        if (app) {
+            result.push(app);
+        }
+        for (let label of this.getSelectedLabels(env)) {
+            result.push(label);
+        }
+        return result;
+    }
+    static onExecute() {
+        let env = Envs.getSelected();
+        let args = this.getSelectedToExecute(env);
+        console.log(env);
+        console.log(args);
+        $.ajax({ method: "POST", url: "/api/release/execute", data: { env: env, arg: args[0] } }).then(function (data) {
+            console.log(data);
+            AppContext.selectedProcess = data;
+        });
     }
 }
 
