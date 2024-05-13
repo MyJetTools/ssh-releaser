@@ -1,43 +1,56 @@
+use std::sync::Arc;
+
 use settings::GlobalSettingsModel;
 
-use crate::{script_environment::ScriptEnvironment, settings::ScriptModel};
-
 mod app;
-mod execute_cloud_flare_write_domain;
-mod execute_commands;
+
+mod environment;
+
 mod execute_from_template;
-mod execute_get_request;
-mod execute_post_request;
+
+mod execution;
 mod file_name;
 mod file_path;
+mod http;
 mod http_over_ssh;
-mod script_environment;
+
 mod scripts;
 mod settings;
-mod upload_file;
 
 #[tokio::main]
 async fn main() {
-    let arg = std::env::args().last().unwrap();
+    //    let arg = std::env::args().last().unwrap();
 
-    println!("Executing with argument: {}", arg);
+    //    println!("Executing with argument: {}", arg);
+    //let env_param = AppEnvParams::new(arg);
 
-    let mut my_settings = GlobalSettingsModel::read_from_file(".ssh-releaser".to_string())
+    let my_settings = GlobalSettingsModel::read_from_file(".ssh-releaser".to_string())
         .await
         .unwrap();
 
-    my_settings.post_process();
+    // my_settings.post_process();
 
-    let app = app::AppContext::new(my_settings).await;
+    let app = Arc::new(app::AppContext::new(my_settings).await);
 
-    for step in &app.release_settings.steps {
-        if !app.settings.execute_me(step, arg.as_str()) {
+    crate::http::setup_server(&app);
+
+    app.app_states.wait_until_shutdown().await;
+
+    /*
+
+    let env_ctx = app
+        .global_settings
+        .get_env_settings(env_param.get_env())
+        .await;
+
+    for step in env_ctx.get_execution_steps() {
+        if !env_ctx.execute_me(step, env_param.get_label()) {
             continue;
         }
 
         println!("Executing step: {}", step.id);
 
-        let script_model = ScriptModel::from_step(step, &app).await;
+        let script_model = ScriptModel::from_step(step, &env_ctx).await;
 
         for remote_command in script_model.get_commands() {
             println!("-----------------");
@@ -48,7 +61,7 @@ async fn main() {
             match remote_command.get_remote_command_type(script_model.get_current_path()) {
                 settings::RemoteCommandType::ExecuteCommands { ssh, commands } => {
                     execute_commands::execute_commands(
-                        &app,
+                        &env_ctx,
                         &script_model,
                         &ssh,
                         commands.as_slice(),
@@ -57,16 +70,21 @@ async fn main() {
                 }
 
                 settings::RemoteCommandType::UploadFile { ssh, params, file } => {
-                    upload_file::upload_file(&app, &script_model, params, &ssh, file).await;
+                    upload_file::upload_file(&env_ctx, &script_model, params, &ssh, file).await;
                 }
 
                 settings::RemoteCommandType::PostRequest { ssh, data } => {
-                    execute_post_request::execute_post_request(&app, &script_model, &ssh, &data)
-                        .await;
+                    execute_post_request::execute_post_request(
+                        &env_ctx,
+                        &script_model,
+                        &ssh,
+                        &data,
+                    )
+                    .await;
                 }
 
                 settings::RemoteCommandType::GetRequest { ssh, data } => {
-                    execute_get_request::execute_get_request(&app, &script_model, &ssh, &data)
+                    execute_get_request::execute_get_request(&env_ctx, &script_model, &ssh, &data)
                         .await;
                 }
                 settings::RemoteCommandType::FromTemplate {
@@ -75,7 +93,7 @@ async fn main() {
                     script_file_path,
                 } => {
                     execute_from_template::execute_from_template(
-                        &app,
+                        &env_ctx,
                         from_file,
                         script_file_path,
                         params,
@@ -85,11 +103,12 @@ async fn main() {
 
                 settings::RemoteCommandType::WriteCloudFlareDomainARecord(model) => {
                     crate::execute_cloud_flare_write_domain::execute_cloud_flare_write_domain(
-                        &app, model,
+                        &env_ctx, model,
                     )
                     .await;
                 }
             }
         }
     }
+     */
 }

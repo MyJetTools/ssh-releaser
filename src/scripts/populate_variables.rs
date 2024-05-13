@@ -1,6 +1,6 @@
 use rust_extensions::StrOrString;
 
-use crate::{app::AppContext, script_environment::ScriptEnvironment};
+use crate::{environment::EnvContext, execution::*};
 
 use super::PopulateVariablesProcessing;
 
@@ -8,7 +8,7 @@ pub const PLACEHOLDER_OPEN_TOKEN: &str = "${";
 pub const PLACEHOLDER_CLOSE_TOKEN: &str = "}";
 
 pub async fn populate_variables<'s>(
-    app: &AppContext,
+    settings: &'s EnvContext,
     script_env: Option<&impl ScriptEnvironment>,
     src: &'s str,
 ) -> StrOrString<'s> {
@@ -42,7 +42,7 @@ pub async fn populate_variables<'s>(
                 let populate_placeholders_after_reading_from_file = !processing.has_raw();
 
                 let content = get_placeholder_content(
-                    app,
+                    settings,
                     script_env,
                     placeholder_to_process,
                     populate_placeholders_after_reading_from_file,
@@ -63,17 +63,17 @@ pub async fn populate_variables<'s>(
 }
 
 async fn get_placeholder_content<'s>(
-    app: &'s AppContext,
+    settings: &'s EnvContext,
     script_env: Option<&'s impl ScriptEnvironment>,
     placeholder: &str,
     populate_placeholders_after_reading_from_file: bool,
 ) -> StrOrString<'s> {
     if placeholder.starts_with("/") || placeholder.starts_with("~") || placeholder.starts_with(".")
     {
-        let (mut content, _) = crate::scripts::load_file(app, script_env, placeholder).await;
+        let (mut content, _) = crate::scripts::load_file(settings, script_env, placeholder).await;
         if populate_placeholders_after_reading_from_file {
             content = super::populate_variables_after_loading_from_file(
-                app,
+                settings,
                 script_env,
                 content,
                 PLACEHOLDER_OPEN_TOKEN,
@@ -92,5 +92,5 @@ async fn get_placeholder_content<'s>(
         return result.into();
     }
 
-    app.get_env_variable(script_env, placeholder)
+    settings.get_env_variable(script_env, placeholder)
 }

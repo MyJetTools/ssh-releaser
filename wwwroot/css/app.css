@@ -1,0 +1,27 @@
+body {
+    overflow-y: none;
+    --app-height: 100vh;
+    --app-width: 100vw;
+    --left-panel-width: 200px;
+}
+
+#main {
+    width: 100%;
+    height: 100vh;
+    padding-left: var(--left-panel-width);
+}
+
+
+#left-panel {
+    width: 200px;
+    height: var(--app-height);
+    position: absolute;
+    left: 0;
+    top: 0;
+    box-shadow: 0 0 3px lightgray;
+}
+
+#headers {
+    width: 100%;
+    height: 60px;
+}

@@ -16,7 +16,5 @@ mod script_model;
 pub use script_model::*;
 mod script_from_settings_model;
 pub use script_from_settings_model::*;
-mod settings_model;
-pub use settings_model::*;
 mod cloud_flare_config;
 pub use cloud_flare_config::*;

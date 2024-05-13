@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{file_path::FilePathRef, script_environment::ScriptEnvironment};
+use crate::{execution::ScriptEnvironment, file_path::FilePathRef};
 
 pub struct ReadingFromTemplateEnvironment {
     vars: Option<HashMap<String, String>>,

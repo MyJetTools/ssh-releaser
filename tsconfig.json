@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "module": "amd",
+        "target": "ES6",
+        "sourceMap": true,
+        "outDir": "JavaScript"
+    },
+    "include": [
+        "TypeScript/**/*.ts",
+    ],
+    "compileOnSave": true,
+    "exclude": [
+        "node_modules"
+    ]
+}

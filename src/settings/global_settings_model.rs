@@ -1,16 +1,21 @@
-use std::path;
+use std::{collections::BTreeMap, path};
 
 use serde::*;
+
+use crate::environment::EnvContext;
 
 use super::{HomeSettingsModel, RemoteCommand};
 
 #[derive(my_settings_reader::SettingsModel, Debug, Clone, Serialize, Deserialize)]
 pub struct GlobalSettingsModel {
     //working_dir: String,
-    pub home_dir: String, // Script step would use this director as home directory which is going to be resolved by ~ symbol
+    envs: BTreeMap<String, String>, // Script step would use this director as home directory which is going to be resolved by ~ symbol
 }
 
 impl GlobalSettingsModel {
+    pub fn get_envs(&self) -> Vec<String> {
+        self.envs.keys().map(|x| x.to_string()).collect()
+    }
     /*
     pub async fn read_working_settings(&self) -> HomeSettingsModel {
         let file_name = self.get_global_settings_file_name();
@@ -27,37 +32,74 @@ impl GlobalSettingsModel {
 
         serde_yaml::from_slice(content.as_ref().unwrap()).unwrap()
     }
-     */
+
 
     pub fn post_process(&mut self) {
-        if self.home_dir.starts_with("~") {
-            self.home_dir = self
-                .home_dir
-                .replace("~", std::env::var("HOME").unwrap().as_str());
+        let mut result = HashMap::new();
+
+        for (key, value) in &self.envs {
+            result.insert(key.to_string(), value);
+        }
+
+        self.envs.clear();
+
+        for (key, value) in result {
+            self.envs.insert(key, value);
         }
     }
-
-    pub async fn load_home_settings(&self) -> HomeSettingsModel {
-        let mut file_name = self.home_dir.clone();
-        if !file_name.ends_with(path::MAIN_SEPARATOR) {
-            file_name.push(path::MAIN_SEPARATOR);
-        }
-
-        file_name.push_str("settings.yaml");
-
-        println!("Loading home settings from file: {}", file_name.as_str());
-
-        let content = match tokio::fs::read(file_name.as_str()).await {
-            Ok(result) => result,
-            Err(err) => panic!("Can not read file {}. Err: {}", file_name, err),
+     */
+    pub async fn get_env_settings(&self, env: &str) -> EnvContext {
+        let home_dir = match self.envs.get(env) {
+            Some(home_dir) => home_dir,
+            None => panic!("There is not environment {} in global settings", env),
         };
 
-        let mut result: HomeSettingsModel = serde_yaml::from_slice(content.as_ref()).unwrap();
+        let home_dir = if home_dir.starts_with("~") {
+            home_dir.replace("~", std::env::var("HOME").unwrap().as_str())
+        } else {
+            home_dir.clone()
+        };
 
-        result.post_process();
+        let home_settings = load_home_settings(home_dir.as_str()).await;
 
-        result
+        EnvContext::new(home_dir, home_settings).await
     }
+
+    /*
+    pub fn get_home_dir(&self, env: &str) -> &str {
+        match self.envs.get(env) {
+            Some(result) => result,
+            None => {
+                panic!("There is not environment {} in global settings", env);
+            }
+        }
+    }
+
+
+
+     */
+}
+
+async fn load_home_settings(home_dir: &str) -> HomeSettingsModel {
+    let mut file_name = home_dir.to_string();
+    if !file_name.ends_with(path::MAIN_SEPARATOR) {
+        file_name.push(path::MAIN_SEPARATOR);
+    }
+
+    file_name.push_str("settings.yaml");
+
+    println!("Loading home settings from file: {}", file_name.as_str());
+
+    let content = match tokio::fs::read(file_name.as_str()).await {
+        Ok(result) => result,
+        Err(err) => panic!("Can not read file {}. Err: {}", file_name, err),
+    };
+
+    let mut result: HomeSettingsModel = serde_yaml::from_slice(content.as_ref()).unwrap();
+
+    result.post_process();
+
+    result
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

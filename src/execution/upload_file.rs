@@ -1,23 +1,29 @@
-use std::{collections::HashMap, time::Duration};
+use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use crate::{
-    app::AppContext,
+    environment::EnvContext,
     settings::{ScriptModel, UploadFileModel},
 };
 
+use super::{ExecuteCommandError, ExecuteLogsContainer};
+
 pub async fn upload_file(
-    app: &AppContext,
+    env_settings: &EnvContext,
     script_model: &ScriptModel,
     params: Option<HashMap<String, String>>,
     ssh: &str,
     file: UploadFileModel,
-) {
-    let local_file =
-        crate::scripts::populate_variables(app, Some(script_model), &file.local_file.as_str())
-            .await;
+    logs: &Arc<ExecuteLogsContainer>,
+) -> Result<(), ExecuteCommandError> {
+    let local_file = crate::scripts::populate_variables(
+        env_settings,
+        Some(script_model),
+        &file.local_file.as_str(),
+    )
+    .await;
 
     let mut content = crate::scripts::load_file_and_populate_placeholders(
-        app,
+        env_settings,
         Some(script_model),
         local_file.as_str(),
     )
@@ -26,20 +32,27 @@ pub async fn upload_file(
     if let Some(params) = params {
         let env = UploadFileEnvironment::new(params);
         content = crate::scripts::populate_variables_after_loading_from_file(
-            app,
+            env_settings,
             Some(&env),
             content,
             "*{",
         )
     }
 
-    let session = app.get_ssh_session(ssh).await;
+    let session = env_settings.get_ssh_session(ssh).await;
 
-    let remote_file =
-        crate::scripts::populate_variables(app, Some(script_model), file.remote_file.as_str())
-            .await;
+    let remote_file = crate::scripts::populate_variables(
+        env_settings,
+        Some(script_model),
+        file.remote_file.as_str(),
+    )
+    .await;
 
-    println!("Uploading file to remote path: {}", remote_file.as_str());
+    logs.write_log(format!(
+        "Uploading file to remote path: {}",
+        remote_file.as_str()
+    ))
+    .await;
 
     let result = session
         .upload_file(
@@ -48,10 +61,12 @@ pub async fn upload_file(
             file.mode,
             Duration::from_secs(30),
         )
-        .await
-        .unwrap();
+        .await?;
 
-    println!("File uploaded with result: {}", result);
+    logs.write_log(format!("File uploaded with result: {}", result))
+        .await;
+
+    Ok(())
 }
 
 pub struct UploadFileEnvironment {
@@ -64,7 +79,7 @@ impl UploadFileEnvironment {
     }
 }
 
-impl crate::script_environment::ScriptEnvironment for UploadFileEnvironment {
+impl crate::execution::ScriptEnvironment for UploadFileEnvironment {
     fn get_var(&self, name: &str) -> Option<&str> {
         let result = self.params.get(name)?;
         Some(result)

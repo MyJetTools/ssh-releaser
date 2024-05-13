@@ -1,4 +1,4 @@
-use crate::{app::AppContext, file_path::FilePathRef, script_environment::ScriptEnvironment};
+use crate::{environment::EnvContext, execution::ScriptEnvironment, file_path::FilePathRef};
 
 use super::{RemoteCommand, ScriptFromFileModel, ScriptFromSettingsModel, StepModel};
 
@@ -8,7 +8,7 @@ pub enum ScriptModel {
 }
 
 impl ScriptModel {
-    pub async fn from_step(step_model: &StepModel, app: &AppContext) -> ScriptModel {
+    pub async fn from_step(step_model: &StepModel, env_settings: &EnvContext) -> ScriptModel {
         if let Some(commends) = step_model.script.as_ref() {
             return ScriptModel::FromSettings(ScriptFromSettingsModel {
                 commands: commends.clone(),
@@ -18,7 +18,7 @@ impl ScriptModel {
         if let Some(from_file) = step_model.from_file.as_ref() {
             let script_env: Option<&ScriptModel> = None;
             let (file_content, file_name) =
-                crate::scripts::load_file(app, script_env, from_file).await;
+                crate::scripts::load_file(env_settings, script_env, from_file).await;
 
             return ScriptModel::from_content(file_content.as_str(), file_name.get_file_path());
         }

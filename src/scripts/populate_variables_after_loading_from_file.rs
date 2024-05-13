@@ -1,11 +1,11 @@
-use crate::{app::AppContext, script_environment::ScriptEnvironment};
+use crate::{environment::EnvContext, execution::*};
 
 use super::PopulateVariablesProcessing;
 
 pub const PLACEHOLDER_CLOSE_TOKEN: &str = "}";
 
 pub fn populate_variables_after_loading_from_file(
-    app: &AppContext,
+    settings: &EnvContext,
     script_env: Option<&impl ScriptEnvironment>,
     src: String,
     open_token: &'static str,
@@ -42,7 +42,7 @@ pub fn populate_variables_after_loading_from_file(
                         None => (placeholder, PopulateVariablesProcessing::empty()),
                     };
 
-                    let content = app.get_env_variable(script_env, placeholder_to_process);
+                    let content = settings.get_env_variable(script_env, placeholder_to_process);
 
                     if processing.has_url_encoded() {
                         let url_encoded = super::convert_url_encoded(content.as_str());
