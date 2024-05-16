@@ -113,6 +113,7 @@ async fn load_home_settings(home_dir: &str) -> HomeSettingsModel {
 pub struct StepModel {
     pub id: String,
     pub script: Option<Vec<RemoteCommand>>,
+    pub category: Option<String>,
     pub labels: Option<Vec<String>>,
     pub from_file: Option<String>,
 }

@@ -36,7 +36,14 @@ async fn handle_request(
     let logs = Arc::new(crate::execution::ExecuteLogsContainer::new());
     let envs = crate::execution::get_execution_args_list(&action.app, &input_data.env, logs).await;
     let result = ReleaseDataHttpResponse {
-        ids: envs.ids,
+        ids: envs
+            .ids
+            .into_iter()
+            .map(|itm| IdGroupHttpModel {
+                category: itm.category,
+                ids: itm.ids,
+            })
+            .collect(),
         labels: envs.labels,
     };
     HttpOutput::as_json(result).into_ok_result(false)
@@ -50,6 +57,12 @@ pub struct GetReleaseDataHttpInput {
 
 #[derive(serde::Serialize, Debug, MyHttpObjectStructure)]
 pub struct ReleaseDataHttpResponse {
-    pub ids: Vec<String>,
+    pub ids: Vec<IdGroupHttpModel>,
     pub labels: Vec<String>,
+}
+
+#[derive(serde::Serialize, Debug, MyHttpObjectStructure)]
+pub struct IdGroupHttpModel {
+    pub category: String,
+    pub ids: Vec<String>,
 }

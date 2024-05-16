@@ -1,7 +1,11 @@
 
+
+
+
+
 class AppContext {
     static envs: string[];
-    static apps: string[];
+    static apps: IdGroupHttpModel[];
     static labels: string[];
 
     static selectedProcess: string;

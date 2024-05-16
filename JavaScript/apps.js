@@ -43,13 +43,17 @@ class Apps {
             else {
                 renderer += '<option value="*">All</option>';
             }
-            for (let itm of AppContext.apps) {
-                if (selectedApp == itm) {
-                    renderer += '<option value="' + itm + '" selected>' + itm + "</option>";
+            for (let item of AppContext.apps) {
+                renderer += `<optgroup label="${item.category}">`;
+                for (let itm of item.ids) {
+                    if (selectedApp == itm) {
+                        renderer += '<option value="' + itm + '" selected>' + itm + "</option>";
+                    }
+                    else {
+                        renderer += '<option value="' + itm + '">' + itm + "</option>";
+                    }
                 }
-                else {
-                    renderer += '<option value="' + itm + '">' + itm + "</option>";
-                }
+                renderer += "</optgroup>";
             }
             return renderer + "</select>";
         }, () => {

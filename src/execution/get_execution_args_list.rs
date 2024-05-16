@@ -4,11 +4,18 @@ use crate::app::AppContext;
 
 use super::ExecuteLogsContainer;
 
-pub struct ExecutionArgsList {
+pub struct IdGroup {
+    pub category: String,
     pub ids: Vec<String>,
+}
+
+pub struct ExecutionArgsList {
+    pub ids: Vec<IdGroup>,
     pub labels: Vec<String>,
     pub err: Option<String>,
 }
+
+const NONE_CATEGORY_NAME: &str = "---";
 
 pub async fn get_execution_args_list(
     app: &AppContext,
@@ -33,7 +40,29 @@ pub async fn get_execution_args_list(
     let mut labels_result = Vec::new();
 
     for step_model in env_settings.get_execution_steps() {
-        ids.push(step_model.id.clone());
+        let category_index = match &step_model.category {
+            Some(category) => ids
+                .iter()
+                .position(|id_group: &IdGroup| id_group.category.as_str() == category),
+            None => ids
+                .iter()
+                .position(|id_group: &IdGroup| id_group.category.as_str() == NONE_CATEGORY_NAME),
+        };
+
+        match category_index {
+            Some(index) => {
+                ids[index].ids.push(step_model.id.clone());
+            }
+            None => {
+                ids.push(IdGroup {
+                    category: step_model
+                        .category
+                        .clone()
+                        .unwrap_or(NONE_CATEGORY_NAME.to_string()),
+                    ids: vec![step_model.id.clone()],
+                });
+            }
+        }
 
         if let Some(labels) = step_model.labels.as_ref() {
             for label in labels {

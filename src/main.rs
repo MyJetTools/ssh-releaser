@@ -11,8 +11,8 @@ mod execute_from_template;
 mod execution;
 mod file_name;
 mod file_path;
-mod http;
 mod http_over_ssh;
+mod http_server;
 
 mod scripts;
 mod settings;
@@ -32,7 +32,7 @@ async fn main() {
 
     let app = Arc::new(app::AppContext::new(my_settings).await);
 
-    crate::http::setup_server(&app);
+    crate::http_server::setup_server(&app);
 
     app.app_states.wait_until_shutdown().await;
 
