@@ -83,7 +83,7 @@ async fn get_placeholder_content<'s>(
                 script_env,
                 content,
                 PLACEHOLDER_OPEN_TOKEN,
-            );
+            )?;
         }
 
         return Ok(content.into());
@@ -98,5 +98,5 @@ async fn get_placeholder_content<'s>(
         return Ok(result.into());
     }
 
-    Ok(settings.get_env_variable(script_env, placeholder))
+    Ok(settings.get_env_variable(script_env, placeholder)?)
 }

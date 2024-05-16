@@ -9,11 +9,11 @@ pub fn populate_variables_after_loading_from_file(
     script_env: Option<&impl ScriptEnvironment>,
     src: String,
     open_token: &'static str,
-) -> String {
+) -> Result<String, ExecuteCommandError> {
     let index = src.find(open_token);
 
     if index.is_none() {
-        return src;
+        return Ok(src);
     }
     let mut result = String::new();
 
@@ -42,7 +42,7 @@ pub fn populate_variables_after_loading_from_file(
                         None => (placeholder, PopulateVariablesProcessing::empty()),
                     };
 
-                    let content = settings.get_env_variable(script_env, placeholder_to_process);
+                    let content = settings.get_env_variable(script_env, placeholder_to_process)?;
 
                     if processing.has_url_encoded() {
                         let url_encoded = super::convert_url_encoded(content.as_str());
@@ -55,5 +55,5 @@ pub fn populate_variables_after_loading_from_file(
         }
     }
 
-    result.into()
+    Ok(result.into())
 }

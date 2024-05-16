@@ -38,10 +38,10 @@ pub async fn upload_file(
             Some(&env),
             content,
             "*{",
-        )
+        )?;
     }
 
-    let session = env_settings.get_ssh_session(ssh).await;
+    let session = env_settings.get_ssh_session(ssh).await?;
 
     let remote_file = crate::scripts::populate_variables(
         env_settings,

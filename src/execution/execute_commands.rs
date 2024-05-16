@@ -16,7 +16,7 @@ pub async fn execute_commands(
     commands: &[RemoteCommandItem],
     logs: &Arc<ExecuteLogsContainer>,
 ) -> Result<(), ExecuteCommandError> {
-    let ssh_session = env_settings.get_ssh_session(ssh).await;
+    let ssh_session = env_settings.get_ssh_session(ssh).await?;
     for command in commands {
         let command_name = crate::scripts::populate_variables(
             env_settings,

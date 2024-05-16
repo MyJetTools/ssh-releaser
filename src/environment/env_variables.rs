@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use rust_extensions::StrOrString;
 
-use crate::settings::ExternalVariablesModel;
+use crate::{execution::ExecuteCommandError, settings::ExternalVariablesModel};
 
 pub struct EnvVariables {
     home_variables: HashMap<String, String>,
@@ -23,7 +23,7 @@ impl EnvVariables {
         }
     }
 
-    pub fn get<'s>(&'s self, key: &str) -> StrOrString<'s> {
+    pub fn get<'s>(&'s self, key: &str) -> Result<StrOrString<'s>, ExecuteCommandError> {
         if self.release_file_variables.get(key).is_some() && self.home_variables.get(key).is_some()
         {
             panic!(
@@ -32,24 +32,24 @@ impl EnvVariables {
             );
         }
         if let Some(value) = self.release_file_variables.get(key) {
-            return value.as_str().into();
+            return Ok(value.as_str().into());
         }
 
         if let Some(value) = self.home_variables.get(key) {
-            return value.as_str().into();
+            return Ok(value.as_str().into());
         }
 
         for external_vars in self.vars_from_files.values() {
             if let Some(value) = external_vars.vars.get(key) {
-                return value.as_str().into();
+                return Ok(value.as_str().into());
             }
         }
 
         if let Ok(value) = std::env::var(key) {
             println!("Read Variable {} is defined in environment", key);
-            return value.into();
+            return Ok(value.into());
         }
 
-        panic!("Variable {} not found", key);
+        Err(format!("Variable {} not found", key).into())
     }
 }

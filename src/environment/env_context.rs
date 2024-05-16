@@ -76,46 +76,51 @@ impl EnvContext {
         get_file_name(&self.home_dir, &self.working_dir, script_env, file_name)
     }
 
-    pub fn get_ssh_credentials(&self, id: &str) -> Arc<SshCredentials> {
+    pub fn get_ssh_credentials(
+        &self,
+        id: &str,
+    ) -> Result<Arc<SshCredentials>, ExecuteCommandError> {
         let ssh_config = self.ssh.iter().find(|ssh| ssh.id == id);
 
         if ssh_config.is_none() {
-            panic!("SSH config with id {} not found", id);
+            return Err(format!("SSH config with id {} not found", id).into());
         }
 
         let ssh_config = ssh_config.unwrap();
 
-        Arc::new(SshCredentials::SshAgent {
+        let result = Arc::new(SshCredentials::SshAgent {
             ssh_remote_host: ssh_config.host.clone(),
             ssh_remote_port: ssh_config.port,
             ssh_user_name: ssh_config.user_name.clone(),
-        })
+        });
+
+        Ok(result)
     }
 
-    pub async fn get_ssh_session(&self, id: &str) -> Arc<SshSession> {
+    pub async fn get_ssh_session(&self, id: &str) -> Result<Arc<SshSession>, ExecuteCommandError> {
         let mut ssh_sessions = self.ssh_sessions.lock().await;
 
         if ssh_sessions.contains_key(id) {
-            return ssh_sessions.get(id).unwrap().clone();
+            return Ok(ssh_sessions.get(id).unwrap().clone());
         }
 
-        let ssh_credentials = self.get_ssh_credentials(id);
+        let ssh_credentials = self.get_ssh_credentials(id)?;
 
         let session = Arc::new(SshSession::new(ssh_credentials));
 
         ssh_sessions.insert(id.to_string(), session.clone());
 
-        session
+        Ok(session)
     }
 
     pub fn get_env_variable<'s>(
         &'s self,
         script_env: Option<&'s impl ScriptEnvironment>,
         name: &str,
-    ) -> StrOrString<'s> {
+    ) -> Result<StrOrString<'s>, ExecuteCommandError> {
         if let Some(script_env) = script_env {
             if let Some(value) = script_env.get_var(name) {
-                return value.into();
+                return Ok(value.into());
             }
         }
 

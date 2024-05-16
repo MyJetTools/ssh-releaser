@@ -35,7 +35,7 @@ pub async fn execute_from_template(
         Some(&loading_template_env),
         content,
         "*{",
-    );
+    )?;
 
     let script_model = ScriptModel::from_content(content.as_str(), script_file_path.as_ref())?;
 

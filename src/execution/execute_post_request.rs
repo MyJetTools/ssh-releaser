@@ -18,7 +18,7 @@ pub async fn execute_post_request(
     post_request: &PostDataModel,
     logs: &Arc<ExecuteLogsContainer>,
 ) -> Result<(), ExecuteCommandError> {
-    let ssh_credentials = env_settings.get_ssh_credentials(ssh);
+    let ssh_credentials = env_settings.get_ssh_credentials(ssh)?;
 
     let url =
         scripts::populate_variables(env_settings, Some(script), post_request.url.as_str(), logs)
