@@ -133,7 +133,7 @@ impl ExecuteLogsContainer {
 
                     LogEvent::FinishedErr(log) => {
                         result.push_str(&format!(
-                            r#"<span class="badge text-bg-success">{}</span>"#,
+                            r#"<span class="badge text-bg-danger">{}</span>"#,
                             log
                         ));
                     }
