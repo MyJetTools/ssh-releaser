@@ -96,23 +96,6 @@ class Apps {
 
                 return '<span>Label:</span>' + HtmlHelpers.renderSelect("label", "Apps.saveLabelSelected()", items, selectedLabel);
 
-                /*
-                let rendered = "";
-
-                for (let itm of AppContext.labels) {
-
-                    let myClass = "text-bg-light";
-
-                    if (selectedLabels.includes(itm)) {
-                        myClass = "text-bg-dark";
-                    }
-
-
-                    rendered += `<span data-badge="${itm}" class="badge ${myClass}" style="cursor:pointer" onclick="Apps.onBadgeClick(this)">${itm}</span>`;
-                }
-
-                return rendered;
-                */
             },
 
             () => {
@@ -244,11 +227,15 @@ class Apps {
         let feature = this.getSelectedFeature(env);
 
 
+        document.getElementById("content").innerHTML = "Starting Script...";
 
         let data = {}
 
         if (feature) {
             data["feature"] = feature;
+        }
+        else {
+            data["feature"] = "";
         }
         data["env"] = env;
         data["arg"] = arg;
@@ -256,6 +243,8 @@ class Apps {
         $.ajax({ method: "POST", url: "/api/release/execute", data: data }).then(function (result) {
             console.log(result);
             AppContext.selectedProcess = result;
+        }).fail(function (result) {
+            document.getElementById("content").innerHTML = result;
         });
 
 
