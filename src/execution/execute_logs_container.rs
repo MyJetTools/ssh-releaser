@@ -4,6 +4,7 @@ use tokio::sync::Mutex;
 pub enum LogEvent {
     Info(String),
     Error(String),
+    FinishedOk,
 }
 
 pub struct LogProcess {
@@ -58,6 +59,14 @@ impl ExecuteLogsContainer {
         to_write.logs.push(LogEvent::Error(log));
     }
 
+    pub async fn write_finished_ok(&self) {
+        let mut process = self.processes.lock().await;
+
+        let to_write = process.last_mut().unwrap();
+
+        to_write.logs.push(LogEvent::FinishedOk);
+    }
+
     pub async fn get_as_html(&self) -> String {
         let process = self.processes.lock().await;
 
@@ -75,6 +84,9 @@ impl ExecuteLogsContainer {
                     }
                     LogEvent::Error(log) => {
                         result.push_str(&format!("<li style='color: red;'>{}</li>", log));
+                    }
+                    LogEvent::FinishedOk => {
+                        result.push_str("<li style='color: green;'>Finished Ok</li>");
                     }
                 }
             }

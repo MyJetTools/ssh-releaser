@@ -39,7 +39,29 @@ async fn handle_request(
     let app = action.app.clone();
 
     tokio::spawn(async move {
-        crate::execution::execute(app, input_data.env, input_data.arg, logs_spawned).await;
+        let logs_spawned_squared = logs_spawned.clone();
+        let result = tokio::spawn(async move {
+            match crate::execution::execute(
+                app,
+                input_data.env,
+                input_data.arg,
+                logs_spawned_squared.clone(),
+            )
+            .await
+            {
+                Ok(_) => {
+                    logs_spawned_squared.write_finished_ok().await;
+                }
+                Err(err) => {
+                    logs_spawned_squared.write_error(err).await;
+                }
+            }
+        })
+        .await;
+
+        if let Err(err) = result {
+            logs_spawned.write_error(format!("{:?}", err)).await;
+        }
     });
 
     HttpOutput::as_text(logs.id.clone()).into_ok_result(false)
