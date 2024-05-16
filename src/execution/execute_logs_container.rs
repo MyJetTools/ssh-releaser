@@ -1,10 +1,14 @@
+use std::sync::atomic::AtomicBool;
+
 use rust_extensions::StrOrString;
 use tokio::sync::Mutex;
 
 pub enum LogEvent {
     Info(String),
+    Warning(String),
     Error(String),
     FinishedOk,
+    FinishedErr(String),
 }
 
 pub struct LogProcess {
@@ -24,6 +28,7 @@ impl LogProcess {
 pub struct ExecuteLogsContainer {
     pub id: String,
     pub processes: Mutex<Vec<LogProcess>>,
+    pub finished: AtomicBool,
 }
 
 impl ExecuteLogsContainer {
@@ -31,6 +36,7 @@ impl ExecuteLogsContainer {
         Self {
             id: uuid::Uuid::new_v4().to_string(),
             processes: Mutex::new(vec![LogProcess::new("Preparation".to_string())]),
+            finished: AtomicBool::new(false),
         }
     }
 
@@ -46,6 +52,17 @@ impl ExecuteLogsContainer {
         let to_write = process.last_mut().unwrap();
         println!("{}", log);
         to_write.logs.push(LogEvent::Info(log));
+    }
+
+    pub async fn write_warning(&self, log: impl Into<StrOrString<'static>>) {
+        let mut process = self.processes.lock().await;
+        let log = log.into().to_string();
+
+        let to_write = process.last_mut().unwrap();
+
+        println!("Warning: {}", log);
+
+        to_write.logs.push(LogEvent::Warning(log));
     }
 
     pub async fn write_error(&self, log: impl Into<StrOrString<'static>>) {
@@ -65,6 +82,27 @@ impl ExecuteLogsContainer {
         let to_write = process.last_mut().unwrap();
 
         to_write.logs.push(LogEvent::FinishedOk);
+        println!("Finished Ok");
+        self.finished
+            .store(true, std::sync::atomic::Ordering::Relaxed);
+    }
+
+    pub async fn write_finished_err(&self, log: impl Into<StrOrString<'static>>) {
+        let mut process = self.processes.lock().await;
+
+        let log = log.into().to_string();
+
+        let to_write = process.last_mut().unwrap();
+
+        println!("Finished with Error: {}", log);
+
+        to_write.logs.push(LogEvent::FinishedErr(log));
+        self.finished
+            .store(true, std::sync::atomic::Ordering::Relaxed);
+    }
+
+    pub fn get_finished(&self) -> bool {
+        self.finished.load(std::sync::atomic::Ordering::Relaxed)
     }
 
     pub async fn get_as_html(&self) -> String {
@@ -82,11 +120,22 @@ impl ExecuteLogsContainer {
                     LogEvent::Info(log) => {
                         result.push_str(&format!("<li>{}</li>", log));
                     }
+                    LogEvent::Warning(log) => {
+                        result.push_str(&format!("<li style='color: orange;'>{}</li>", log));
+                    }
                     LogEvent::Error(log) => {
                         result.push_str(&format!("<li style='color: red;'>{}</li>", log));
                     }
                     LogEvent::FinishedOk => {
-                        result.push_str("<li style='color: green;'>Finished Ok</li>");
+                        result
+                            .push_str(r#"<span class="badge text-bg-success">Finished OK</span>"#);
+                    }
+
+                    LogEvent::FinishedErr(log) => {
+                        result.push_str(&format!(
+                            r#"<span class="badge text-bg-success">{}</span>"#,
+                            log
+                        ));
                     }
                 }
             }

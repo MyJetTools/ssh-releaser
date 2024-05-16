@@ -1,6 +1,13 @@
 use std::io::Write;
 
-const JS_FILES: [&str; 4] = ["utils.js", "app.js", "envs.js", "apps.js"];
+const JS_FILES: [&str; 6] = [
+    "utils.js",
+    "html.js",
+    "storage.js",
+    "app.js",
+    "envs.js",
+    "apps.js",
+];
 
 fn main() {
     // panic!("{:?}", std::env::current_dir());

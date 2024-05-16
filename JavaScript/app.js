@@ -10,7 +10,12 @@ setTimeout(function () {
 setInterval(function () {
     if (AppContext.selectedProcess) {
         $.ajax({ url: "/api/release/logs", data: { id: AppContext.selectedProcess } }).then(function (data) {
-            document.getElementById("content").innerHTML = data;
+            let doc = document.getElementById("content");
+            doc.innerHTML = data.html;
+            doc.scrollTo(0, doc.scrollHeight);
+            if (data.finished == true) {
+                AppContext.selectedProcess = undefined;
+            }
         });
     }
 }, 1000);

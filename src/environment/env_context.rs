@@ -134,8 +134,40 @@ impl EnvContext {
         None
     }
 
-    pub fn execute_me(&self, step: &StepModel, arg: &str) -> bool {
+    pub async fn execute_me(
+        &self,
+        logs: &Arc<ExecuteLogsContainer>,
+        step: &StepModel,
+        arg: &str,
+        selected_feature: Option<&str>,
+    ) -> bool {
         for execute_step in arg.split(';') {
+            if let Some(selected_feature) = selected_feature.as_ref() {
+                if let Some(features_include) = step.features_include.as_ref() {
+                    if !features_include.iter().any(|itm| itm == selected_feature) {
+                        logs.write_warning(format!(
+                            "Step {} is not included in the feature {}. Skipping",
+                            step.id, selected_feature
+                        ))
+                        .await;
+                        return false;
+                    }
+                }
+
+                if let Some(features_exclude) = step.features_exclude.as_ref() {
+                    for feature_exclude in features_exclude {
+                        if feature_exclude == selected_feature {
+                            logs.write_warning(format!(
+                                "Step {} is excluded in the feature {}. Skipping",
+                                step.id, selected_feature
+                            ))
+                            .await;
+                            return false;
+                        }
+                    }
+                }
+            }
+
             if execute_step == "*" {
                 return true;
             }

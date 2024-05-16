@@ -1,6 +1,10 @@
 use std::sync::Arc;
 
-use my_http_server::{macros::MyHttpInput, HttpContext, HttpFailResult, HttpOkResult, HttpOutput};
+use my_http_server::{
+    macros::{MyHttpInput, MyHttpInputObjectStructure},
+    HttpContext, HttpFailResult, HttpOkResult, HttpOutput,
+};
+use serde::{Deserialize, Serialize};
 
 use crate::app::AppContext;
 
@@ -12,7 +16,7 @@ use crate::app::AppContext;
     summary: "Get logs info",
     input_data: GetLogsInputData,
     result:[
-        {status_code: 200, description: "Rows", model: "String"},
+        {status_code: 200, description: "Rows", model: "GetLogsHttpResponse"},
     ]
 )]
 pub struct GetLogsInfoAction {
@@ -41,12 +45,21 @@ async fn handle_request(
 
     let container = container.unwrap();
 
-    let response = container.get_as_html().await;
-    HttpOutput::as_text(response).into_ok_result(false)
+    let result = GetLogsHttpResponse {
+        html: container.get_as_html().await,
+        finished: container.get_finished(),
+    };
+    HttpOutput::as_json(result).into_ok_result(false)
 }
 
 #[derive(MyHttpInput)]
 pub struct GetLogsInputData {
     #[http_query(description = "Id of process")]
     pub id: String,
+}
+
+#[derive(MyHttpInputObjectStructure, Serialize, Deserialize)]
+pub struct GetLogsHttpResponse {
+    pub html: String,
+    pub finished: bool,
 }

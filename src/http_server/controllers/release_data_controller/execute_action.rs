@@ -40,11 +40,13 @@ async fn handle_request(
 
     tokio::spawn(async move {
         let logs_spawned_squared = logs_spawned.clone();
+        let feature = input_data.get_feature();
         let result = tokio::spawn(async move {
             match crate::execution::execute(
                 app,
                 input_data.env,
                 input_data.arg,
+                feature,
                 logs_spawned_squared.clone(),
             )
             .await
@@ -53,14 +55,14 @@ async fn handle_request(
                     logs_spawned_squared.write_finished_ok().await;
                 }
                 Err(err) => {
-                    logs_spawned_squared.write_error(err).await;
+                    logs_spawned_squared.write_finished_err(err).await;
                 }
             }
         })
         .await;
 
         if let Err(err) = result {
-            logs_spawned.write_error(format!("{:?}", err)).await;
+            logs_spawned.write_finished_err(format!("{:?}", err)).await;
         }
     });
 
@@ -74,4 +76,21 @@ pub struct ExecuteInputData {
 
     #[http_form_data(description = "Arguments")]
     pub arg: String,
+
+    #[http_form_data(description = "Feature")]
+    pub feature: String,
+}
+
+impl ExecuteInputData {
+    pub fn get_feature(&self) -> Option<String> {
+        if self.feature == "---" {
+            return None;
+        }
+
+        if self.feature.is_empty() {
+            None
+        } else {
+            Some(self.feature.clone())
+        }
+    }
 }

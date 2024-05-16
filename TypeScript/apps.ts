@@ -1,5 +1,7 @@
 
 const selectedAppStorageName = "selectedApp";
+const selectedFeatureStorageName = "selectedFeature";
+const selectedLabelStorageName = "selectedLabel";
 
 class Apps {
 
@@ -22,6 +24,7 @@ class Apps {
         if (data.ids) {
             AppContext.apps = data.ids;
             AppContext.labels = data.labels;
+            AppContext.features = data.features;
             header.innerHTML = this.generateHtml(env);
         }
 
@@ -32,14 +35,14 @@ class Apps {
 
         let selectedApp = this.getSelectedApp(env);
 
-        let selectedLabels: any = this.getSelectedLabels(env);
+        let selectedLabel: any = this.getSelectedLabel(env);
 
         console.log(selectedApp);
 
 
-        return HtmlUtils.render3Table("300px", "auto", "60px", () => {
+        return HtmlUtils.render4Table(["300px", "300px", "auto", "60px"], () => {
 
-            let renderer = '<select id="app" class="form-select"  onchange="Apps.saveSelected()">';
+            let renderer = '<span>App:</span><select id="app" class="form-select"  onchange="Apps.saveSelected()">';
             renderer += '<option value="---">---</option>';
             if (selectedApp == "*") {
                 renderer += '<option value="*" selected>All</option>';
@@ -68,6 +71,32 @@ class Apps {
             return renderer + "</select>";
         },
             () => {
+
+                let selectedFeature = this.getSelectedFeature(env);
+                let items = [];
+
+                items.push("---");
+
+                for (let itm of AppContext.features) {
+                    items.push(itm);
+                }
+
+                return '<span>Feature:</span>' + HtmlHelpers.renderSelect("feature", "Apps.saveFeatureSelected()", items, selectedFeature);
+
+            },
+            () => {
+
+                let items = [];
+
+                items.push("---");
+
+                for (let itm of AppContext.labels) {
+                    items.push(itm);
+                }
+
+                return '<span>Label:</span>' + HtmlHelpers.renderSelect("label", "Apps.saveLabelSelected()", items, selectedLabel);
+
+                /*
                 let rendered = "";
 
                 for (let itm of AppContext.labels) {
@@ -83,6 +112,7 @@ class Apps {
                 }
 
                 return rendered;
+                */
             },
 
             () => {
@@ -97,23 +127,24 @@ class Apps {
     static saveSelected() {
         let app: any = document.getElementById("app");
         let selectedApp: string = app.value;
-        this.saveSelectedApp(selectedApp);
+        MyStorage.saveSelectedByEnv(selectedAppStorageName, selectedApp);
     }
 
-    static saveSelectedApp(selectedApp: string) {
-
-        let storageValue = this.getFromStorageAsObject(selectedAppStorageName);
-
-        let env = Envs.getSelected();
-
-        storageValue[env] = selectedApp;
-
-        localStorage.setItem(selectedAppStorageName, JSON.stringify(storageValue));
-
+    static saveFeatureSelected() {
+        let app: any = document.getElementById("feature");
+        let selectedFeature: string = app.value;
+        MyStorage.saveSelectedByEnv(selectedFeatureStorageName, selectedFeature);
     }
+
+    static saveLabelSelected() {
+        let app: any = document.getElementById("label");
+        let selectedLabel: string = app.value;
+        MyStorage.saveSelectedByEnv(selectedLabelStorageName, selectedLabel);
+    }
+
 
     static getSelectedApp(env: string): string {
-        let storageValue = this.getFromStorageAsObject(selectedAppStorageName);
+        let storageValue = MyStorage.getAsObject(selectedAppStorageName);
         let result = storageValue[env];
 
         if (result == '---') {
@@ -123,32 +154,28 @@ class Apps {
         return result;
     }
 
-    static getFromStorageAsObject(name: string): {} {
-        let storageValue = localStorage.getItem(name);
 
-        if (!storageValue) {
-            return {};
+    static getSelectedFeature(env: string): string {
+        let storageValue = MyStorage.getAsObject(selectedFeatureStorageName);
+        let result = storageValue[env];
+
+        if (result == '---') {
+            return undefined;
         }
 
-        try {
-            return JSON.parse(storageValue);
-        } catch (e) {
-            return {};
-        }
+        return result;
     }
 
 
-    static getSelectedLabels(env: string): string[] {
+    static getSelectedLabel(env: string): string {
+        let storageValue = MyStorage.getAsObject(selectedLabelStorageName);
+        let result = storageValue[env];
 
-        let valueFromStorage = this.getFromStorageAsObject("selectedLabels");
-
-        let badges = valueFromStorage[env];
-
-        if (!badges) {
-            return [];
-        } else {
-            return JSON.parse(badges);
+        if (result == '---') {
+            return undefined;
         }
+
+        return result;
     }
 
 
@@ -160,8 +187,7 @@ class Apps {
         console.log(itm);
 
 
-        let valueFromStorage = this.getFromStorageAsObject("selectedLabels");
-
+        let valueFromStorage = MyStorage.getAsObject("selectedLabels");
 
         let badges = valueFromStorage[env];
 
@@ -190,23 +216,23 @@ class Apps {
     }
 
 
-    static getSelectedToExecute(env: string): string[] {
+    static getArgToExecute(env: string): string {
 
-        let result = [];
 
         let app = this.getSelectedApp(env);
 
+
         if (app) {
-            result.push(app);
+            return app;
         }
 
+        let label = this.getSelectedLabel(env);
 
-        for (let label of this.getSelectedLabels(env)) {
-            result.push(label);
+        if (label) {
+            return label;
         }
 
-
-        return result;
+        return undefined;
 
     }
 
@@ -214,15 +240,22 @@ class Apps {
     static onExecute() {
 
         let env = Envs.getSelected();
-        let args = this.getSelectedToExecute(env);
+        let arg = this.getArgToExecute(env);
+        let feature = this.getSelectedFeature(env);
 
-        console.log(env);
-        console.log(args);
 
-        $.ajax({ method: "POST", url: "/api/release/execute", data: { env: env, arg: args[0] } }).then(function (data) {
-            console.log(data);
 
-            AppContext.selectedProcess = data;
+        let data = {}
+
+        if (feature) {
+            data["feature"] = feature;
+        }
+        data["env"] = env;
+        data["arg"] = arg;
+
+        $.ajax({ method: "POST", url: "/api/release/execute", data: data }).then(function (result) {
+            console.log(result);
+            AppContext.selectedProcess = result;
         });
 
 

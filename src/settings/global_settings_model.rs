@@ -115,5 +115,7 @@ pub struct StepModel {
     pub script: Option<Vec<RemoteCommand>>,
     pub category: Option<String>,
     pub labels: Option<Vec<String>>,
+    pub features_include: Option<Vec<String>>,
+    pub features_exclude: Option<Vec<String>>,
     pub from_file: Option<String>,
 }

@@ -13,6 +13,7 @@ pub struct ExecutionArgsList {
     pub ids: Vec<IdGroup>,
     pub labels: Vec<String>,
     pub err: Option<String>,
+    pub features: Vec<String>,
 }
 
 const NONE_CATEGORY_NAME: &str = "---";
@@ -30,6 +31,7 @@ pub async fn get_execution_args_list(
             return ExecutionArgsList {
                 ids: Vec::new(),
                 labels: Vec::new(),
+                features: Vec::new(),
                 err: Some(err_str),
             };
         }
@@ -38,6 +40,8 @@ pub async fn get_execution_args_list(
     let mut ids = Vec::new();
 
     let mut labels_result = Vec::new();
+
+    let mut features = Vec::new();
 
     for step_model in env_settings.get_execution_steps() {
         let category_index = match &step_model.category {
@@ -71,11 +75,28 @@ pub async fn get_execution_args_list(
                 }
             }
         }
+
+        if let Some(features_to_scan) = step_model.features_exclude.as_ref() {
+            for feature in features_to_scan {
+                if !features.contains(feature) {
+                    features.push(feature.to_string());
+                }
+            }
+        }
+
+        if let Some(features_to_scan) = step_model.features_include.as_ref() {
+            for feature in features_to_scan {
+                if !features.contains(feature) {
+                    features.push(feature.to_string());
+                }
+            }
+        }
     }
 
     ExecutionArgsList {
         ids,
         labels: labels_result,
+        features: features,
         err: None,
     }
 }
