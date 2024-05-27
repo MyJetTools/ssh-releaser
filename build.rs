@@ -1,16 +1,19 @@
-use std::io::Write;
-
-const JS_FILES: [&str; 6] = [
-    "utils.js",
-    "html.js",
-    "storage.js",
-    "app.js",
-    "envs.js",
-    "apps.js",
-];
-
 fn main() {
     // panic!("{:?}", std::env::current_dir());
+
+    ci_utils::js::merge_js_files(
+        &[
+            "utils.js",
+            "html.js",
+            "storage.js",
+            "app.js",
+            "envs.js",
+            "apps.js",
+        ],
+        "wwwroot/js/app.js",
+    );
+
+    /*
     let mut out_file = std::fs::File::create("wwwroot/js/app.js").unwrap();
 
     for file_name in JS_FILES {
@@ -34,4 +37,5 @@ fn main() {
             out_file.write_all("\n".as_bytes()).unwrap();
         }
     }
+     */
 }
