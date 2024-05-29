@@ -1,6 +1,6 @@
 
 class AppContext {
-    static envs: string[];
+    static envs: IEnvironment[];
     static apps: IdGroupHttpModel[];
     static labels: string[];
     static features: string[];

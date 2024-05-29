@@ -10,15 +10,15 @@ pub async fn execute(
     app: Arc<AppContext>,
     env: String,
     args: String,
-    feature: Option<String>,
     logs: Arc<ExecuteLogsContainer>,
 ) -> Result<(), ExecuteCommandError> {
     let env_ctx = app.global_settings.get_env_settings(&env, &logs).await?;
 
-    let feature = feature.as_ref().map(|f| f.as_str());
-
     for step in env_ctx.get_execution_steps() {
-        if !env_ctx.execute_me(&logs, step, &args, feature).await {
+        if !env_ctx
+            .execute_me(&logs, step, &args, env_ctx.get_feature())
+            .await
+        {
             continue;
         }
 

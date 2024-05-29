@@ -19,6 +19,7 @@ pub struct EnvContext {
     pub home_dir: String,
     pub working_dir: String,
     env_variables: EnvVariables,
+    pub feature: Option<String>,
     //home_settings: HomeSettingsModel,
     //release_settings: ReleaseSettingsModel,
     ssh_sessions: Mutex<HashMap<String, Arc<SshSession>>>,
@@ -51,6 +52,7 @@ impl EnvContext {
             .await?;
 
         let result = Self {
+            feature: home_settings.feature,
             home_dir,
             working_dir: home_settings.working_dir,
             env_variables: EnvVariables::new(
@@ -66,6 +68,10 @@ impl EnvContext {
         };
 
         Ok(result)
+    }
+
+    pub fn get_feature(&self) -> Option<&str> {
+        self.feature.as_deref()
     }
 
     pub fn get_file_name(
