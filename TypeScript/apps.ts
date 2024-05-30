@@ -28,7 +28,6 @@ class Apps {
             header.innerHTML = this.generateHtml(env);
         }
 
-
     }
 
     static generateHtml(env: string): string {
@@ -38,7 +37,6 @@ class Apps {
         let selectedLabel: any = this.getSelectedLabel(env);
 
         console.log(selectedApp);
-
 
         return HtmlUtils.render3Table("auto", "400px", "60px", () => {
 
