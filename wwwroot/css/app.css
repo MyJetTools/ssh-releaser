@@ -3,7 +3,7 @@ body {
     --app-height: 100vh;
     --app-width: 100vw;
     --left-panel-width: 200px;
-    --header-width: 64px;
+    --header-height: 64px;
 }
 
 #main {
@@ -24,7 +24,7 @@ body {
 
 #headers {
     width: 100%;
-    height: var(--header-width);
+    height: var(--header-height);
 }
 
 #content {
@@ -33,9 +33,92 @@ body {
     /* font-family: monospace; */
     font-size: 14px;
     padding: 5px;
-    height: calc(var(--app-height) - var(--header-width) - 15px);
+    height: calc(var(--app-height) - var(--header-height) - 15px);
     overflow-y: auto;
     border-radius: 5px;
     box-shadow: 0 0 5px #00000070;
     margin: 5px;
+}
+
+
+#select-app {
+    cursor: pointer;
+}
+
+#background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: var(--app-height);
+}
+
+.hidden {
+    display: none;
+}
+
+.visible {
+    display: block;
+}
+
+.select-popup {
+    left: var(--left-panel-width);
+    position: absolute;
+    top: var(--header-height);
+    height: calc(var(--app-height) - var(--header-height));
+    width: 300px;
+    background: white;
+    border-radius: 5px;
+    overflow-y: auto;
+
+
+    box-shadow: 0 0 4px #00000069;
+}
+
+.select-group {
+    color: #2f00e2;
+    text-shadow: 1px 1px 1px #0000002b;
+    font-weight: 700;
+    user-select: none;
+}
+
+.select-item {
+    padding-left: 5px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.disable-selection {
+    -webkit-user-select: none;
+    /* Safari */
+    -ms-user-select: none;
+    /* IE 10 and IE 11 */
+    user-select: none;
+    /* Standard syntax */
+}
+
+.select-item-selected {
+    background: #b3b7ff;
+    border-radius: 3px;
+    box-shadow: 0 0 2px #00000063;
+}
+
+
+.select-filter {
+    width: 100%;
+    border-radius: 3px;
+    border-width: 1px;
+    background: #ffffffcf;
+    backdrop-filter: blur(5px);
+}
+
+
+.select-filter-panel {
+    padding: 5px;
+    position: fixed;
+}
+
+#select-items {
+    padding: 5px;
+    margin-top: 32px;
 }

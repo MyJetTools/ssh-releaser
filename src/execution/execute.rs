@@ -15,10 +15,7 @@ pub async fn execute(
     let env_ctx = app.global_settings.get_env_settings(&env, &logs).await?;
 
     for step in env_ctx.get_execution_steps() {
-        if !env_ctx
-            .execute_me(&logs, step, &args, env_ctx.get_feature())
-            .await
-        {
+        if !env_ctx.execute_me(&logs, step, &args).await {
             continue;
         }
 

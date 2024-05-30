@@ -1,11 +1,16 @@
 
 class AppContext {
     static envs: IEnvironment[];
-    static apps: IdGroupHttpModel[];
+    static apps: SelectAdvanced<string>;
     static labels: string[];
-    static features: string[];
-
     static selectedProcess: string;
+
+    static hideBackground() {
+        let background = document.getElementById("background")
+        background.classList.remove("visible");
+        background.classList.add("hidden");
+
+    }
 }
 
 
@@ -35,3 +40,8 @@ setInterval(function () {
 
 
 
+function backgroundClick() {
+    let background = document.getElementById("background")
+    background.classList.remove("visible");
+    background.classList.add("hidden");
+}

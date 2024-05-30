@@ -17,6 +17,7 @@ fn main() {
     ci_utils::js::merge_js_files(
         &[
             "utils.js",
+            "select_advanced.js",
             "html.js",
             "storage.js",
             "app.js",

@@ -45,7 +45,6 @@ async fn handle_request(
             })
             .collect(),
         labels: envs.labels,
-        features: envs.features,
     };
     HttpOutput::as_json(result).into_ok_result(false)
 }
@@ -60,7 +59,6 @@ pub struct GetReleaseDataHttpInput {
 pub struct ReleaseDataHttpResponse {
     pub ids: Vec<IdGroupHttpModel>,
     pub labels: Vec<String>,
-    pub features: Vec<String>,
 }
 
 #[derive(serde::Serialize, Debug, MyHttpObjectStructure)]

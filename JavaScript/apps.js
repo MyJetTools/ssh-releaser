@@ -22,14 +22,26 @@ class Apps {
     static request(env) {
         return __awaiter(this, void 0, void 0, function* () {
             let header = document.getElementById("header");
-            AppContext.apps = [];
+            if (AppContext.apps) {
+                AppContext.apps.dispose();
+            }
             header.innerHTML = "Loading...";
             let data = yield $.ajax({ url: "/api/release/all", data: { env: env } });
             if (data.ids) {
-                AppContext.apps = data.ids;
                 AppContext.labels = data.labels;
-                AppContext.features = data.features;
                 header.innerHTML = this.generateHtml(env);
+                let items = [];
+                for (let item of data.ids) {
+                    items.push({ name: item.category, items: item.ids });
+                }
+                AppContext.apps = new SelectAdvanced(items, Apps.getSelectedApp(env), {
+                    componentId: 'select-app',
+                    backgroundId: 'background',
+                    getItemAsString: (item) => item,
+                    onSelect: (value) => {
+                        Apps.saveSelectedApp(value);
+                    }
+                });
             }
         });
     }
@@ -38,27 +50,37 @@ class Apps {
         let selectedLabel = this.getSelectedLabel(env);
         console.log(selectedApp);
         return HtmlUtils.render3Table("auto", "400px", "60px", () => {
+            let renderer = `<div>App:</div><div id="select-app" class="form-select" data-value="${selectedApp}">${selectedApp}</div>`;
+            return renderer;
+            /*
             let renderer = '<span>App:</span><select id="app" class="form-select"  onchange="Apps.saveSelected()">';
             renderer += '<option value="---">---</option>';
             if (selectedApp == "*") {
                 renderer += '<option value="*" selected>All</option>';
-            }
-            else {
+            } else {
                 renderer += '<option value="*">All</option>';
             }
+
+
             for (let item of AppContext.apps) {
+
                 renderer += `<optgroup label="${item.category}">`;
+
                 for (let itm of item.ids) {
                     if (selectedApp == itm) {
                         renderer += '<option value="' + itm + '" selected>' + itm + "</option>";
-                    }
-                    else {
+                    } else {
                         renderer += '<option value="' + itm + '">' + itm + "</option>";
                     }
                 }
+
                 renderer += "</optgroup>";
             }
+
+
+
             return renderer + "</select>";
+            */
         }, () => {
             let items = [];
             items.push("---");
@@ -70,10 +92,12 @@ class Apps {
             return `<button class="btn btn-primary" onclick="Apps.onExecute()">Execute</button>`;
         });
     }
-    static saveSelected() {
-        let app = document.getElementById("app");
-        let selectedApp = app.value;
-        MyStorage.saveSelectedByEnv(selectedAppStorageName, selectedApp);
+    static getSelectedAppValue() {
+        let app = document.getElementById("select-app");
+        return app.getAttribute("data-value");
+    }
+    static saveSelectedApp(value) {
+        MyStorage.saveSelectedByEnv(selectedAppStorageName, value);
     }
     static saveLabelSelected() {
         let app = document.getElementById("label");

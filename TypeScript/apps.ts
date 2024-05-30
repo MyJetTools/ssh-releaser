@@ -15,17 +15,40 @@ class Apps {
 
     static async request(env: string) {
         let header = document.getElementById("header");
-        AppContext.apps = [];
+
+        if (AppContext.apps) {
+            AppContext.apps.dispose();
+        }
+
         header.innerHTML = "Loading...";
 
-        let data = await $.ajax({ url: "/api/release/all", data: { env: env } });
+        let data: ReleaseAppsHttpModel = await $.ajax({ url: "/api/release/all", data: { env: env } });
 
 
         if (data.ids) {
-            AppContext.apps = data.ids;
+
             AppContext.labels = data.labels;
-            AppContext.features = data.features;
             header.innerHTML = this.generateHtml(env);
+
+            let items: SelectItemsGroup<string>[] = [];
+
+            for (let item of data.ids) {
+                items.push({ name: item.category, items: item.ids });
+            }
+
+            AppContext.apps = new SelectAdvanced(items,
+                Apps.getSelectedApp(env),
+                {
+                    componentId: 'select-app',
+                    backgroundId: 'background',
+                    getItemAsString: (item: string) => item,
+
+                    onSelect: (value: string) => {
+                        Apps.saveSelectedApp(value)
+                    }
+                });
+
+
         }
 
     }
@@ -40,6 +63,10 @@ class Apps {
 
         return HtmlUtils.render3Table("auto", "400px", "60px", () => {
 
+            let renderer = `<div>App:</div><div id="select-app" class="form-select" data-value="${selectedApp}">${selectedApp}</div>`;
+            return renderer;
+
+            /*
             let renderer = '<span>App:</span><select id="app" class="form-select"  onchange="Apps.saveSelected()">';
             renderer += '<option value="---">---</option>';
             if (selectedApp == "*") {
@@ -67,6 +94,7 @@ class Apps {
 
 
             return renderer + "</select>";
+            */
         },
             () => {
 
@@ -90,11 +118,14 @@ class Apps {
 
     }
 
+    static getSelectedAppValue(): string {
+        let app: any = document.getElementById("select-app");
+        return app.getAttribute("data-value");
+    }
 
-    static saveSelected() {
-        let app: any = document.getElementById("app");
-        let selectedApp: string = app.value;
-        MyStorage.saveSelectedByEnv(selectedAppStorageName, selectedApp);
+
+    static saveSelectedApp(value: string) {
+        MyStorage.saveSelectedByEnv(selectedAppStorageName, value);
     }
 
     static saveLabelSelected() {

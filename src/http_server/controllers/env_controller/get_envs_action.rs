@@ -34,7 +34,9 @@ async fn handle_request(
     let mut response: Vec<EnvironmentHttpOutput> = Vec::new();
 
     for env in action.app.global_settings.get_envs() {
+        println!("Getting feature for env: {}", env);
         let feature = crate::scripts::get_env_feature(&action.app, env.clone()).await;
+        println!("Got feature for env: {}", env);
         response.push(EnvironmentHttpOutput { id: env, feature });
     }
 

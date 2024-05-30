@@ -1,6 +1,11 @@
 declare const $;
 
 
+interface ReleaseAppsHttpModel {
+    ids: IdGroupHttpModel[];
+    labels: string[];
+}
+
 
 interface IdGroupHttpModel {
     category: string;

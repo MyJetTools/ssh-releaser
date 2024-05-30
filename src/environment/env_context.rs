@@ -70,10 +70,6 @@ impl EnvContext {
         Ok(result)
     }
 
-    pub fn get_feature(&self) -> Option<&str> {
-        self.feature.as_deref()
-    }
-
     pub fn get_file_name(
         &self,
         script_env: Option<&impl ScriptEnvironment>,
@@ -150,10 +146,9 @@ impl EnvContext {
         logs: &Arc<ExecuteLogsContainer>,
         step: &StepModel,
         arg: &str,
-        selected_feature: Option<&str>,
     ) -> bool {
         for execute_step in arg.split(';') {
-            if let Some(selected_feature) = selected_feature.as_ref() {
+            if let Some(selected_feature) = self.feature.as_ref() {
                 if let Some(features_include) = step.features_include.as_ref() {
                     if !features_include.iter().any(|itm| itm == selected_feature) {
                         logs.write_warning(format!(

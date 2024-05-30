@@ -29,6 +29,98 @@ class HtmlUtils {
     }
 }
 
+// select_advanced.js
+class SelectAdvanced {
+    constructor(items, selected, setup) {
+        this.items = items;
+        this.htmlComponent = document.getElementById(setup.componentId);
+        this.backgroundElement = document.getElementById(setup.backgroundId);
+        this.getItemAsString = setup.getItemAsString;
+        this.onSelect = setup.onSelect;
+        SelectAdvanced.enteredFilter = "";
+        SelectAdvanced.current = this;
+        this.selected = selected;
+        this.htmlComponent.addEventListener("click", () => {
+            this.backgroundElement.classList.remove("hidden");
+            this.backgroundElement.classList.add("visible");
+            this.showContent();
+        });
+    }
+    dispose() {
+    }
+    iterateItems(callback) {
+        for (let group of this.items) {
+            for (let item of group.items) {
+                callback(item);
+            }
+        }
+    }
+    renderThisItem(item) {
+        let itemAsString = this.getItemAsString(item).toLowerCase();
+        return itemAsString.includes(SelectAdvanced.enteredFilter);
+    }
+    groupHasContentToShow(group) {
+        if (SelectAdvanced.enteredFilter == "") {
+            console.log("selected is empty");
+            return true;
+        }
+        for (let item of group.items) {
+            if (this.renderThisItem(item)) {
+                return true;
+            }
+        }
+        console.log("exiting at end");
+        return false;
+    }
+    static onFilterChange(aThis) {
+        SelectAdvanced.enteredFilter = aThis.value.toLowerCase();
+        console.log("Filter changed: " + SelectAdvanced.enteredFilter);
+        SelectAdvanced.current.reRenderItems();
+    }
+    showContent() {
+        let width = this.htmlComponent.clientWidth;
+        let result = `<div class="select-popup" style="width:${width}px"  onclick="window.event.cancelBubble = true;"><div class="select-filter-panel" style="width:${width}px"><input class="select-filter" oninput="SelectAdvanced.onFilterChange(this)"/></div>`;
+        result += `<div id="select-items">` + this.renderItems() + `</div>`;
+        result += `</div>`;
+        this.backgroundElement.innerHTML = result;
+    }
+    reRenderItems() {
+        let items = document.getElementById("select-items");
+        items.innerHTML = this.renderItems();
+    }
+    renderItems() {
+        let result = "";
+        for (let group of this.items) {
+            if (!this.groupHasContentToShow(group)) {
+                continue;
+            }
+            result += `<div class="select-group disable-selection">${group.name}</div>`;
+            for (let item of group.items) {
+                if (this.renderThisItem(item)) {
+                    let selectedAttr = "";
+                    if (this.selected == this.getItemAsString(item)) {
+                        selectedAttr = "select-item-selected";
+                    }
+                    result += `<div data-value="${item}" class="select-item disable-selection ${selectedAttr}" onclick="SelectAdvanced.onClick(this)">${item}</div>`;
+                }
+            }
+        }
+        return result;
+    }
+    static onClick(aThis) {
+        let value = aThis.getAttribute("data-value");
+        this.current.selectItem(value);
+    }
+    selectItem(value) {
+        SelectAdvanced.enteredFilter = "";
+        this.selected = value;
+        this.htmlComponent.innerHTML = value;
+        this.htmlComponent.setAttribute("data-value", value);
+        AppContext.hideBackground();
+        this.onSelect(value);
+    }
+}
+
 // html.js
 class HtmlHelpers {
     static renderSelect(id, callback, options, selected) {
@@ -69,6 +161,11 @@ class MyStorage {
 
 // app.js
 class AppContext {
+    static hideBackground() {
+        let background = document.getElementById("background");
+        background.classList.remove("visible");
+        background.classList.add("hidden");
+    }
 }
 setTimeout(function () {
     $.ajax({ url: "/api/env/list" }).then(function (data) {
@@ -89,6 +186,11 @@ setInterval(function () {
         });
     }
 }, 1000);
+function backgroundClick() {
+    let background = document.getElementById("background");
+    background.classList.remove("visible");
+    background.classList.add("hidden");
+}
 
 // envs.js
 class Envs {
@@ -148,14 +250,26 @@ class Apps {
     static request(env) {
         return __awaiter(this, void 0, void 0, function* () {
             let header = document.getElementById("header");
-            AppContext.apps = [];
+            if (AppContext.apps) {
+                AppContext.apps.dispose();
+            }
             header.innerHTML = "Loading...";
             let data = yield $.ajax({ url: "/api/release/all", data: { env: env } });
             if (data.ids) {
-                AppContext.apps = data.ids;
                 AppContext.labels = data.labels;
-                AppContext.features = data.features;
                 header.innerHTML = this.generateHtml(env);
+                let items = [];
+                for (let item of data.ids) {
+                    items.push({ name: item.category, items: item.ids });
+                }
+                AppContext.apps = new SelectAdvanced(items, Apps.getSelectedApp(env), {
+                    componentId: 'select-app',
+                    backgroundId: 'background',
+                    getItemAsString: (item) => item,
+                    onSelect: (value) => {
+                        Apps.saveSelectedApp(value);
+                    }
+                });
             }
         });
     }
@@ -164,27 +278,37 @@ class Apps {
         let selectedLabel = this.getSelectedLabel(env);
         console.log(selectedApp);
         return HtmlUtils.render3Table("auto", "400px", "60px", () => {
+            let renderer = `<div>App:</div><div id="select-app" class="form-select" data-value="${selectedApp}">${selectedApp}</div>`;
+            return renderer;
+            /*
             let renderer = '<span>App:</span><select id="app" class="form-select"  onchange="Apps.saveSelected()">';
             renderer += '<option value="---">---</option>';
             if (selectedApp == "*") {
                 renderer += '<option value="*" selected>All</option>';
-            }
-            else {
+            } else {
                 renderer += '<option value="*">All</option>';
             }
+
+
             for (let item of AppContext.apps) {
+
                 renderer += `<optgroup label="${item.category}">`;
+
                 for (let itm of item.ids) {
                     if (selectedApp == itm) {
                         renderer += '<option value="' + itm + '" selected>' + itm + "</option>";
-                    }
-                    else {
+                    } else {
                         renderer += '<option value="' + itm + '">' + itm + "</option>";
                     }
                 }
+
                 renderer += "</optgroup>";
             }
+
+
+
             return renderer + "</select>";
+            */
         }, () => {
             let items = [];
             items.push("---");
@@ -196,10 +320,12 @@ class Apps {
             return `<button class="btn btn-primary" onclick="Apps.onExecute()">Execute</button>`;
         });
     }
-    static saveSelected() {
-        let app = document.getElementById("app");
-        let selectedApp = app.value;
-        MyStorage.saveSelectedByEnv(selectedAppStorageName, selectedApp);
+    static getSelectedAppValue() {
+        let app = document.getElementById("select-app");
+        return app.getAttribute("data-value");
+    }
+    static saveSelectedApp(value) {
+        MyStorage.saveSelectedByEnv(selectedAppStorageName, value);
     }
     static saveLabelSelected() {
         let app = document.getElementById("label");
