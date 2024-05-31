@@ -18,11 +18,16 @@ pub struct ExecutionArgsList {
 const NONE_CATEGORY_NAME: &str = "---";
 
 pub async fn get_execution_args_list(
-    app: &AppContext,
+    app: Arc<AppContext>,
     env: &str,
     logs: Arc<ExecuteLogsContainer>,
 ) -> ExecutionArgsList {
-    let env_ctx = match app.global_settings.get_env_settings(env, &logs).await {
+    let env_ctx = match app
+        .clone()
+        .global_settings
+        .get_env_settings(app, env, &logs)
+        .await
+    {
         Ok(env_settings) => env_settings,
         Err(err) => {
             let err_str = format!("Error getting env settings: {:?}", err);

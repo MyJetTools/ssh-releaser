@@ -6,7 +6,11 @@ pub async fn get_env_feature(app: &Arc<AppContext>, id: String) -> Option<String
     let app = app.clone();
     let result = tokio::spawn(async move {
         let logs = Arc::new(ExecuteLogsContainer::new());
-        app.global_settings.get_env_settings(&id, &logs).await
+
+        app.clone()
+            .global_settings
+            .get_env_settings(app, &id, &logs)
+            .await
     })
     .await;
 

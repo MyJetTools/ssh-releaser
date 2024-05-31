@@ -3,7 +3,9 @@ use std::{collections::HashMap, sync::Arc};
 use rust_extensions::AppStates;
 use tokio::sync::Mutex;
 
-use crate::{execution::ExecuteLogsContainer, settings::GlobalSettingsModel};
+use crate::{
+    caching::HttpGetRequestsCache, execution::ExecuteLogsContainer, settings::GlobalSettingsModel,
+};
 
 pub const APP_VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
@@ -11,6 +13,7 @@ pub struct AppContext {
     pub global_settings: GlobalSettingsModel,
     pub app_states: Arc<AppStates>,
     pub containers: Mutex<HashMap<String, Arc<ExecuteLogsContainer>>>,
+    pub cached_http_get_requests: Mutex<HttpGetRequestsCache>,
 }
 
 impl AppContext {
@@ -19,6 +22,7 @@ impl AppContext {
             global_settings,
             app_states: Arc::new(AppStates::create_initialized()),
             containers: Mutex::new(HashMap::new()),
+            cached_http_get_requests: Mutex::new(HttpGetRequestsCache::new()),
         }
     }
 

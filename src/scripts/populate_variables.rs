@@ -10,7 +10,7 @@ pub const PLACEHOLDER_OPEN_TOKEN: &str = "${";
 pub const PLACEHOLDER_CLOSE_TOKEN: &str = "}";
 
 pub async fn populate_variables<'s>(
-    settings: &'s EnvContext,
+    env_ctx: &'s EnvContext,
     script_env: Option<&impl ScriptEnvironment>,
     src: &'s str,
     logs: &Arc<ExecuteLogsContainer>,
@@ -45,7 +45,7 @@ pub async fn populate_variables<'s>(
                 let populate_placeholders_after_reading_from_file = !processing.has_raw();
 
                 let content = get_placeholder_content(
-                    settings,
+                    env_ctx,
                     script_env,
                     placeholder_to_process,
                     populate_placeholders_after_reading_from_file,
@@ -67,7 +67,7 @@ pub async fn populate_variables<'s>(
 }
 
 async fn get_placeholder_content<'s>(
-    settings: &'s EnvContext,
+    env_ctx: &'s EnvContext,
     script_env: Option<&'s impl ScriptEnvironment>,
     placeholder: &str,
     populate_placeholders_after_reading_from_file: bool,
@@ -76,10 +76,10 @@ async fn get_placeholder_content<'s>(
     if placeholder.starts_with("/") || placeholder.starts_with("~") || placeholder.starts_with(".")
     {
         let (mut content, _) =
-            crate::scripts::load_file(settings, script_env, placeholder, logs).await?;
+            crate::scripts::load_file(env_ctx, script_env, placeholder, logs).await?;
         if populate_placeholders_after_reading_from_file {
             content = super::populate_variables_after_loading_from_file(
-                settings,
+                env_ctx,
                 script_env,
                 content,
                 PLACEHOLDER_OPEN_TOKEN,
@@ -98,5 +98,5 @@ async fn get_placeholder_content<'s>(
         return Ok(result.into());
     }
 
-    Ok(settings.get_env_variable(script_env, placeholder)?)
+    Ok(env_ctx.get_env_variable(script_env, placeholder)?)
 }

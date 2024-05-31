@@ -12,7 +12,10 @@ pub async fn execute(
     args: String,
     logs: Arc<ExecuteLogsContainer>,
 ) -> Result<(), ExecuteCommandError> {
-    let env_ctx = app.global_settings.get_env_settings(&env, &logs).await?;
+    let env_ctx = app
+        .global_settings
+        .get_env_settings(app.clone(), &env, &logs)
+        .await?;
 
     for step in env_ctx.get_execution_steps() {
         if !env_ctx.execute_me(&logs, step, &args).await {

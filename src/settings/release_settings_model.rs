@@ -3,6 +3,7 @@ use std::{collections::HashMap, sync::Arc};
 use serde::*;
 
 use crate::{
+    app::AppContext,
     execution::{ExecuteCommandError, ExecuteLogsContainer},
     file_name::FileName,
 };
@@ -83,6 +84,7 @@ impl ReleaseSettingsModel {
 
     pub async fn load_vars_from_files(
         &self,
+        app: &AppContext,
         get_file_name: impl Fn(&str) -> FileName,
         logs: &Arc<ExecuteLogsContainer>,
     ) -> Result<HashMap<String, ExternalVariablesModel>, ExecuteCommandError> {
@@ -95,7 +97,7 @@ impl ReleaseSettingsModel {
 
                 let file_name = get_file_name(var_file);
 
-                let content = file_name.load_content(logs).await?;
+                let content = file_name.load_content(app, logs).await?;
 
                 let external_vars: ExternalVariablesModel =
                     match serde_yaml::from_slice(content.as_slice()) {

@@ -3,6 +3,7 @@ use std::{collections::BTreeMap, path, sync::Arc};
 use serde::*;
 
 use crate::{
+    app::AppContext,
     environment::EnvContext,
     execution::{ExecuteCommandError, ExecuteLogsContainer},
 };
@@ -53,6 +54,7 @@ impl GlobalSettingsModel {
      */
     pub async fn get_env_settings(
         &self,
+        app: Arc<AppContext>,
         env: &str,
         logs: &Arc<ExecuteLogsContainer>,
     ) -> Result<EnvContext, ExecuteCommandError> {
@@ -69,7 +71,7 @@ impl GlobalSettingsModel {
 
         let home_settings = load_home_settings(home_dir.as_str()).await;
 
-        EnvContext::new(home_dir, home_settings, logs).await
+        EnvContext::new(app, home_dir, home_settings, logs).await
     }
 
     /*

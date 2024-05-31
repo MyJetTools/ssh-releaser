@@ -5,6 +5,7 @@ use rust_extensions::StrOrString;
 use tokio::sync::Mutex;
 
 use crate::{
+    app::AppContext,
     execution::*,
     file_name::FileName,
     settings::{
@@ -16,6 +17,7 @@ use crate::{
 use super::EnvVariables;
 
 pub struct EnvContext {
+    pub app: Arc<AppContext>,
     pub home_dir: String,
     pub working_dir: String,
     env_variables: EnvVariables,
@@ -31,6 +33,7 @@ pub struct EnvContext {
 
 impl EnvContext {
     pub async fn new(
+        app: Arc<AppContext>,
         home_dir: String,
         home_settings: HomeSettingsModel,
         logs: &Arc<ExecuteLogsContainer>,
@@ -43,6 +46,7 @@ impl EnvContext {
 
         let vars_from_files = release_settings
             .load_vars_from_files(
+                &app,
                 |file_name| {
                     let script_env: Option<&ScriptModel> = None;
                     get_file_name(&home_dir, &home_settings.working_dir, script_env, file_name)
@@ -52,6 +56,7 @@ impl EnvContext {
             .await?;
 
         let result = Self {
+            app,
             feature: home_settings.feature,
             home_dir,
             working_dir: home_settings.working_dir,

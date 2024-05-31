@@ -34,7 +34,8 @@ async fn handle_request(
     _ctx: &HttpContext,
 ) -> Result<HttpOkResult, HttpFailResult> {
     let logs = Arc::new(crate::execution::ExecuteLogsContainer::new());
-    let envs = crate::execution::get_execution_args_list(&action.app, &input_data.env, logs).await;
+    let envs =
+        crate::execution::get_execution_args_list(action.app.clone(), &input_data.env, logs).await;
     let result = ReleaseDataHttpResponse {
         ids: envs
             .ids

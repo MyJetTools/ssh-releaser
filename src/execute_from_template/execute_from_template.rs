@@ -9,7 +9,7 @@ use crate::{
 };
 
 pub async fn execute_from_template(
-    env_settings: &EnvContext,
+    env_ctx: &EnvContext,
     from_file: String,
     script_file_path: FilePath,
     mut params: Option<HashMap<String, String>>,
@@ -20,18 +20,18 @@ pub async fn execute_from_template(
     if let Some(params) = params.as_mut() {
         for (key, value) in params.clone() {
             let value =
-                crate::scripts::populate_variables(env_settings, script_env, &value, logs).await?;
+                crate::scripts::populate_variables(env_ctx, script_env, &value, logs).await?;
             params.insert(key.clone(), value.to_string());
         }
     }
 
-    let file_name = env_settings.get_file_name(script_env, from_file.as_str());
+    let file_name = env_ctx.get_file_name(script_env, from_file.as_str());
 
-    let content = file_name.load_content_as_string(logs).await?;
+    let content = file_name.load_content_as_string(&env_ctx.app, logs).await?;
 
     let loading_template_env = ReadingFromTemplateEnvironment::new(params);
     let content = crate::scripts::populate_variables_after_loading_from_file(
-        env_settings,
+        env_ctx,
         Some(&loading_template_env),
         content,
         "*{",
@@ -48,7 +48,7 @@ pub async fn execute_from_template(
         match remote_command.get_remote_command_type(script_model.get_current_path()) {
             settings::RemoteCommandType::ExecuteCommands { ssh, commands } => {
                 crate::execution::execute_commands(
-                    env_settings,
+                    env_ctx,
                     &script_model,
                     &ssh,
                     commands.as_slice(),
@@ -58,37 +58,18 @@ pub async fn execute_from_template(
             }
 
             settings::RemoteCommandType::UploadFile { ssh, params, file } => {
-                crate::execution::upload_file(
-                    env_settings,
-                    &script_model,
-                    params,
-                    &ssh,
-                    file,
-                    logs,
-                )
-                .await?;
+                crate::execution::upload_file(env_ctx, &script_model, params, &ssh, file, logs)
+                    .await?;
             }
 
             settings::RemoteCommandType::PostRequest { ssh, data } => {
-                crate::execution::execute_post_request(
-                    env_settings,
-                    &script_model,
-                    &ssh,
-                    &data,
-                    logs,
-                )
-                .await?;
+                crate::execution::execute_post_request(env_ctx, &script_model, &ssh, &data, logs)
+                    .await?;
             }
 
             settings::RemoteCommandType::GetRequest { ssh, data } => {
-                crate::execution::execute_get_request(
-                    env_settings,
-                    &script_model,
-                    &ssh,
-                    &data,
-                    logs,
-                )
-                .await?;
+                crate::execution::execute_get_request(env_ctx, &script_model, &ssh, &data, logs)
+                    .await?;
             }
             settings::RemoteCommandType::FromTemplate {
                 from_file,
@@ -102,8 +83,7 @@ pub async fn execute_from_template(
             }
 
             settings::RemoteCommandType::WriteCloudFlareDomainARecord(model) => {
-                crate::execution::execute_cloud_flare_write_domain(env_settings, model, logs)
-                    .await?;
+                crate::execution::execute_cloud_flare_write_domain(env_ctx, model, logs).await?;
             }
         }
     }

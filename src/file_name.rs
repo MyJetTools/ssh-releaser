@@ -3,6 +3,8 @@ use std::sync::Arc;
 use flurl::FlUrl;
 
 use crate::{
+    app::AppContext,
+    caching::HttpResponseCache,
     execution::{ExecuteCommandError, ExecuteLogsContainer},
     file_path::FilePathRef,
 };
@@ -36,14 +38,16 @@ impl FileName {
 
     pub async fn load_content_as_string(
         &self,
+        app: &AppContext,
         logs: &Arc<ExecuteLogsContainer>,
     ) -> Result<String, ExecuteCommandError> {
-        let content = self.load_content(logs).await?;
+        let content = self.load_content(app, logs).await?;
         Ok(String::from_utf8(content)?)
     }
 
     pub async fn load_content(
         &self,
+        app: &AppContext,
         logs: &Arc<ExecuteLogsContainer>,
     ) -> Result<Vec<u8>, ExecuteCommandError> {
         if !self.as_str().starts_with("http") {
@@ -66,18 +70,31 @@ impl FileName {
             }
         }
 
+        let url = self.as_str().to_lowercase();
+        let mut cache_access = app.cached_http_get_requests.lock().await;
+
+        let response = cache_access.get_cached_response(url.as_str());
+
+        if let Some(response) = response {
+            return Ok(response);
+        }
+
         logs.write_log(format!(
             "Loading content from remote resource: '{}'",
             self.as_str()
         ))
         .await;
 
-        let fl_url = FlUrl::new(self.as_str())
+        let fl_url = FlUrl::new(url.as_str())
             .do_not_reuse_connection()
             .get()
             .await
             .unwrap();
         let result = fl_url.receive_body().await?;
+
+        let cached_response = HttpResponseCache::new(result.clone());
+
+        cache_access.set_cached_response(url, cached_response);
 
         Ok(result)
     }
