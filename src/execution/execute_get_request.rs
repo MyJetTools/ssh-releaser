@@ -28,7 +28,7 @@ pub async fn execute_get_request(
 
     //    println!("Content: {}", content);
 
-    let http_client = Http1Client::connect(&ssh_credentials, &remote_uri).await?;
+    let http_client = Http1Client::connect(&ssh_credentials, &remote_uri, logs).await?;
 
     let (status_code, text) = http_client.get(remote_uri, &get_request.headers).await?;
 

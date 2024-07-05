@@ -30,7 +30,7 @@ pub async fn execute_post_request(
 
     //    println!("Content: {}", content);
 
-    let http_client = Http1Client::connect(&ssh_credentials, &remote_uri).await?;
+    let http_client = Http1Client::connect(&ssh_credentials, &remote_uri, logs).await?;
 
     let (status_code, text) = http_client
         .post(remote_uri, content.into_bytes(), &post_request.headers)

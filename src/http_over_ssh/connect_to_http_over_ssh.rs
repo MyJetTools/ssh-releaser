@@ -6,6 +6,8 @@ use hyper::{client::conn::http1::SendRequest, Uri};
 use hyper_util::rt::TokioIo;
 use my_ssh::{SshCredentials, SshSession};
 
+use crate::execution::ExecuteLogsContainer;
+
 use super::HTTP_CLIENT_TIMEOUT;
 
 const BUFFER_SIZE: usize = 1024 * 512;
@@ -13,6 +15,7 @@ const BUFFER_SIZE: usize = 1024 * 512;
 pub async fn connect_to_http_over_ssh(
     ssh_credentials: &Arc<SshCredentials>,
     remote_ui: &Uri,
+    logs: &Arc<ExecuteLogsContainer>,
 ) -> (Arc<SshSession>, SendRequest<Full<Bytes>>) {
     let ssh_session = Arc::new(SshSession::new(ssh_credentials.clone()));
 
@@ -23,13 +26,26 @@ pub async fn connect_to_http_over_ssh(
         80
     };
 
-    println!("Connection to ssh host: {} port: {}", remote_host, port);
+    logs.write_log(format!(
+        "Connecting to ssh:{}->{}:{}",
+        ssh_session.get_ssh_credentials().get_host_port_as_string(),
+        remote_host,
+        port
+    ))
+    .await;
+
     let ssh_channel = ssh_session
         .connect_to_remote_host(remote_host.as_str(), port, HTTP_CLIENT_TIMEOUT)
         .await
         .unwrap();
 
-    println!("Connected to ssh host: {} port: {}", remote_host, port);
+    logs.write_log(format!(
+        "Connected to ssh:{}->{}:{}",
+        ssh_session.get_ssh_credentials().get_host_port_as_string(),
+        remote_host,
+        port
+    ))
+    .await;
 
     let buf_writer = tokio::io::BufWriter::with_capacity(
         BUFFER_SIZE,

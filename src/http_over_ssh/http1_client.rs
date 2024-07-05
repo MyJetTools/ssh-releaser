@@ -6,6 +6,8 @@ use my_ssh::{SshCredentials, SshSession};
 use rust_extensions::date_time::DateTimeAsMicroseconds;
 use tokio::sync::Mutex;
 
+use crate::execution::ExecuteLogsContainer;
+
 use super::HttpClientError;
 pub const HTTP_CLIENT_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(30);
 
@@ -19,9 +21,10 @@ impl Http1Client {
     pub async fn connect(
         ssh_credentials: &Arc<SshCredentials>,
         remote_host: &Uri,
+        logs: &Arc<ExecuteLogsContainer>,
     ) -> Result<Self, HttpClientError> {
         let (ssh_session, send_request) =
-            Self::connect_to_http_over_ssh(ssh_credentials, remote_host).await;
+            Self::connect_to_http_over_ssh(ssh_credentials, remote_host, logs).await;
 
         let result = Self {
             send_request: Mutex::new(Some(send_request)),
@@ -35,8 +38,9 @@ impl Http1Client {
     async fn connect_to_http_over_ssh(
         credentials: &Arc<SshCredentials>,
         remote_host: &Uri,
+        logs: &Arc<ExecuteLogsContainer>,
     ) -> (Arc<SshSession>, SendRequest<Full<Bytes>>) {
-        let result = super::connect_to_http_over_ssh(credentials, remote_host).await;
+        let result = super::connect_to_http_over_ssh(credentials, remote_host, logs).await;
 
         result
     }
