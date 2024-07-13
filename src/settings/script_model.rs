@@ -16,7 +16,7 @@ pub enum ScriptModel {
 impl ScriptModel {
     pub async fn from_step(
         step_model: &StepModel,
-        env_settings: &EnvContext,
+        env_ctx: &EnvContext,
         logs: &Arc<ExecuteLogsContainer>,
     ) -> Result<ScriptModel, ExecuteCommandError> {
         if let Some(commends) = step_model.script.as_ref() {
@@ -28,7 +28,7 @@ impl ScriptModel {
         if let Some(from_file) = step_model.from_file.as_ref() {
             let script_env: Option<&ScriptModel> = None;
             let (file_content, file_name) =
-                crate::scripts::load_file(env_settings, script_env, from_file, logs).await?;
+                crate::scripts::load_file(env_ctx, script_env, from_file, logs).await?;
 
             return ScriptModel::from_content(file_content.as_str(), file_name.get_file_path());
         }

@@ -8,6 +8,7 @@ pub struct EnvVariables {
     home_variables: HashMap<String, String>,
     release_file_variables: HashMap<String, String>,
     vars_from_files: HashMap<String, ExternalVariablesModel>,
+    pub step_repeat_parameter: Option<(String, String)>,
 }
 
 impl EnvVariables {
@@ -15,15 +16,23 @@ impl EnvVariables {
         home_variables: HashMap<String, String>,
         release_file_variables: HashMap<String, String>,
         vars_from_files: HashMap<String, ExternalVariablesModel>,
+        step_repeat_parameter: Option<(String, String)>,
     ) -> Self {
         Self {
             home_variables,
             release_file_variables,
             vars_from_files,
+            step_repeat_parameter,
         }
     }
 
     pub fn get<'s>(&'s self, key: &str) -> Result<StrOrString<'s>, ExecuteCommandError> {
+        if let Some(step_repeat_parameter) = &self.step_repeat_parameter {
+            if key == step_repeat_parameter.0 {
+                return Ok(step_repeat_parameter.1.as_str().into());
+            }
+        }
+
         if self.release_file_variables.get(key).is_some() && self.home_variables.get(key).is_some()
         {
             panic!(

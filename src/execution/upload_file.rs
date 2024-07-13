@@ -12,7 +12,7 @@ pub async fn upload_file(
     script_model: &ScriptModel,
     params: Option<HashMap<String, String>>,
     ssh: &str,
-    file: UploadFileModel,
+    file: &UploadFileModel,
     logs: &Arc<ExecuteLogsContainer>,
 ) -> Result<(), ExecuteCommandError> {
     let local_file = crate::scripts::populate_variables(

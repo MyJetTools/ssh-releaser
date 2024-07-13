@@ -27,6 +27,7 @@ pub struct RemoteCommandItem {
     pub exec: Option<String>,
     pub exec_from_file: Option<String>,
     pub ignore_error: bool,
+    pub params: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -85,7 +86,9 @@ pub enum RemoteCommandType {
         params: Option<HashMap<String, String>>,
     },
 
-    WriteCloudFlareDomainARecord(WriteCloudFlareDomainARecordModel),
+    WriteCloudFlareDomainARecord {
+        model: WriteCloudFlareDomainARecordModel,
+    },
 }
 
 pub struct WriteCloudFlareDomainARecordModel {
@@ -197,7 +200,7 @@ impl RemoteCommand {
                     is_proxy: self.is_proxy.unwrap(),
                 };
 
-                return RemoteCommandType::WriteCloudFlareDomainARecord(model);
+                return RemoteCommandType::WriteCloudFlareDomainARecord { model };
             }
             _ => panic!("Unknown remote command type {}", self.r#type),
         }

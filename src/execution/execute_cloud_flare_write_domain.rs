@@ -6,7 +6,7 @@ use super::{ExecuteCommandError, ExecuteLogsContainer};
 
 pub async fn execute_cloud_flare_write_domain(
     env_settings: &EnvContext,
-    model: WriteCloudFlareDomainARecordModel,
+    model: &WriteCloudFlareDomainARecordModel,
     logs: &Arc<ExecuteLogsContainer>,
 ) -> Result<(), ExecuteCommandError> {
     let config = env_settings.find_cloud_flare_config(&model.domain);

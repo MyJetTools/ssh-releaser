@@ -64,6 +64,7 @@ impl EnvContext {
                 home_settings.vars,
                 release_settings.vars,
                 vars_from_files,
+                None,
             ),
             ssh: home_settings.ssh,
             //release_settings: Mutex::new(None),
@@ -73,6 +74,27 @@ impl EnvContext {
         };
 
         Ok(result)
+    }
+
+    pub async fn apply_step_repeat_parameter(
+        &mut self,
+        param: Option<(&str, &str)>,
+        logs: &Arc<ExecuteLogsContainer>,
+    ) {
+        self.env_variables.step_repeat_parameter = None;
+        if param.is_none() {
+            return;
+        }
+
+        let (name, value) = param.unwrap();
+
+        logs.write_warning(format!(
+            "Applying step repeat parameter: {} = {}",
+            name, value
+        ))
+        .await;
+
+        self.env_variables.step_repeat_parameter = Some((name.to_string(), value.to_string()));
     }
 
     pub fn get_file_name(
@@ -199,8 +221,8 @@ impl EnvContext {
         false
     }
 
-    pub fn get_execution_steps(&self) -> &[StepModel] {
-        &self.steps
+    pub fn get_execution_steps(&self) -> Vec<StepModel> {
+        self.steps.clone()
     }
 }
 

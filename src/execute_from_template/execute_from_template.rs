@@ -10,8 +10,8 @@ use crate::{
 
 pub async fn execute_from_template(
     env_ctx: &EnvContext,
-    from_file: String,
-    script_file_path: FilePath,
+    from_file: &String,
+    script_file_path: &FilePath,
     mut params: Option<HashMap<String, String>>,
     logs: &Arc<ExecuteLogsContainer>,
 ) -> Result<(), ExecuteCommandError> {
@@ -29,7 +29,7 @@ pub async fn execute_from_template(
 
     let content = file_name.load_content_as_string(&env_ctx.app, logs).await?;
 
-    let loading_template_env = ReadingFromTemplateEnvironment::new(params);
+    let loading_template_env = ReadingFromTemplateEnvironment::new(params.clone());
     let content = crate::scripts::populate_variables_after_loading_from_file(
         env_ctx,
         Some(&loading_template_env),
@@ -58,7 +58,7 @@ pub async fn execute_from_template(
             }
 
             settings::RemoteCommandType::UploadFile { ssh, params, file } => {
-                crate::execution::upload_file(env_ctx, &script_model, params, &ssh, file, logs)
+                crate::execution::upload_file(env_ctx, &script_model, params, &ssh, &file, logs)
                     .await?;
             }
 
@@ -82,8 +82,8 @@ pub async fn execute_from_template(
                 ).into());
             }
 
-            settings::RemoteCommandType::WriteCloudFlareDomainARecord(model) => {
-                crate::execution::execute_cloud_flare_write_domain(env_ctx, model, logs).await?;
+            settings::RemoteCommandType::WriteCloudFlareDomainARecord { model } => {
+                crate::execution::execute_cloud_flare_write_domain(env_ctx, &model, logs).await?;
             }
         }
     }

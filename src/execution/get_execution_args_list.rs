@@ -45,7 +45,7 @@ pub async fn get_execution_args_list(
     let mut labels_result = Vec::new();
 
     for step_model in env_ctx.get_execution_steps() {
-        if !env_ctx.execute_me(&logs, step_model, "*").await {
+        if !env_ctx.execute_me(&logs, &step_model, "*").await {
             continue;
         }
 
