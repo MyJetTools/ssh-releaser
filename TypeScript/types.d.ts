@@ -9,10 +9,16 @@ interface ReleaseAppsHttpModel {
 
 interface IdGroupHttpModel {
     category: string;
-    ids: string[];
+    ids: ReleaseStepHttpModel[];
+}
+
+
+interface ReleaseStepHttpModel {
+    id: string;
+    exclude_features: string[],
 }
 
 interface IEnvironment {
     id: String,
-    feature?: String;
+    features: String[];
 }

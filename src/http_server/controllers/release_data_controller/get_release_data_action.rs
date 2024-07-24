@@ -42,7 +42,14 @@ async fn handle_request(
             .into_iter()
             .map(|itm| IdGroupHttpModel {
                 category: itm.category,
-                ids: itm.ids,
+                ids: itm
+                    .ids
+                    .into_iter()
+                    .map(|(id, exclude_features)| ReleaseStepHttpModel {
+                        id,
+                        exclude_features,
+                    })
+                    .collect(),
             })
             .collect(),
         labels: envs.labels,
@@ -65,5 +72,11 @@ pub struct ReleaseDataHttpResponse {
 #[derive(serde::Serialize, Debug, MyHttpObjectStructure)]
 pub struct IdGroupHttpModel {
     pub category: String,
-    pub ids: Vec<String>,
+    pub ids: Vec<ReleaseStepHttpModel>,
+}
+
+#[derive(serde::Serialize, Debug, MyHttpObjectStructure)]
+pub struct ReleaseStepHttpModel {
+    pub id: String,
+    pub exclude_features: Vec<String>,
 }

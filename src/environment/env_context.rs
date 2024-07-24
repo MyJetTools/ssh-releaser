@@ -21,7 +21,7 @@ pub struct EnvContext {
     pub home_dir: String,
     pub working_dir: String,
     env_variables: EnvVariables,
-    pub feature: Option<String>,
+    pub features: Option<Vec<String>>,
     //home_settings: HomeSettingsModel,
     //release_settings: ReleaseSettingsModel,
     ssh_sessions: Mutex<HashMap<String, Arc<SshSession>>>,
@@ -57,7 +57,7 @@ impl EnvContext {
 
         let result = Self {
             app,
-            feature: home_settings.feature,
+            features: home_settings.features,
             home_dir,
             working_dir: home_settings.working_dir,
             env_variables: EnvVariables::new(
@@ -175,12 +175,15 @@ impl EnvContext {
         arg: &str,
     ) -> bool {
         for execute_step in arg.split(';') {
-            if let Some(selected_feature) = self.feature.as_ref() {
+            if let Some(selected_features) = self.features.as_ref() {
                 if let Some(features_include) = step.features_include.as_ref() {
-                    if !features_include.iter().any(|itm| itm == selected_feature) {
+                    if !features_include
+                        .iter()
+                        .any(|itm| selected_features.contains(itm))
+                    {
                         logs.write_warning(format!(
-                            "Step {} is not included in the feature {}. Skipping",
-                            step.id, selected_feature
+                            "Step {} is not included. No crossing features {:?}. Skipping",
+                            step.id, selected_features
                         ))
                         .await;
                         return false;
@@ -189,10 +192,10 @@ impl EnvContext {
 
                 if let Some(features_exclude) = step.features_exclude.as_ref() {
                     for feature_exclude in features_exclude {
-                        if feature_exclude == selected_feature {
+                        if selected_features.contains(feature_exclude) {
                             logs.write_warning(format!(
-                                "Step {} is excluded in the feature {}. Skipping",
-                                step.id, selected_feature
+                                "Step {} is excluded in the feature {:?}. Skipping",
+                                step.id, selected_features
                             ))
                             .await;
                             return false;

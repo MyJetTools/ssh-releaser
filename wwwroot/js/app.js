@@ -35,8 +35,9 @@ class SelectAdvanced {
         this.items = items;
         this.htmlComponent = document.getElementById(setup.componentId);
         this.backgroundElement = document.getElementById(setup.backgroundId);
-        this.getItemAsString = setup.getItemAsString;
+        this.getItemAsHtml = setup.getItemAsHtml;
         this.onSelect = setup.onSelect;
+        this.getItemValue = setup.getItemValue;
         SelectAdvanced.enteredFilter = "";
         SelectAdvanced.current = this;
         this.selected = selected;
@@ -56,7 +57,7 @@ class SelectAdvanced {
         }
     }
     renderThisItem(item) {
-        let itemAsString = this.getItemAsString(item).toLowerCase();
+        let itemAsString = this.getItemValue(item).toLowerCase();
         return itemAsString.includes(SelectAdvanced.enteredFilter);
     }
     groupHasContentToShow(group) {
@@ -98,10 +99,12 @@ class SelectAdvanced {
             for (let item of group.items) {
                 if (this.renderThisItem(item)) {
                     let selectedAttr = "";
-                    if (this.selected == this.getItemAsString(item)) {
+                    if (this.selected == this.getItemValue(item)) {
                         selectedAttr = "select-item-selected";
                     }
-                    result += `<div data-value="${item}" class="select-item disable-selection ${selectedAttr}" onclick="SelectAdvanced.onClick(this)">${item}</div>`;
+                    let content = this.getItemAsHtml(item);
+                    let value = this.getItemValue(item);
+                    result += `<div data-value="${value}" class="select-item disable-selection ${selectedAttr}" onclick="SelectAdvanced.onClick(this)">${content}</div>`;
                 }
             }
         }
@@ -202,8 +205,13 @@ class Envs {
         let result = "";
         for (let itm of AppContext.envs) {
             let featureBadge = "";
-            if (itm.feature) {
-                featureBadge = '<div><span class="badge text-bg-primary">' + itm.feature + '</span></div>';
+            if (itm.features) {
+                let odd = false;
+                for (let feature of itm.features) {
+                    let badgeType = getBadgeType(odd);
+                    featureBadge += '<div><span class="badge ' + badgeType + '">' + feature + '</span></div>';
+                    odd = !odd;
+                }
             }
             if (itm.id == selected) {
                 result += `<div class="btn btn-secondary" style="width:100%">${itm.id}${featureBadge}</div>`;
@@ -223,6 +231,12 @@ class Envs {
         this.refresh();
         Apps.request(id);
     }
+}
+function getBadgeType(odd) {
+    if (odd) {
+        return "text-bg-warning";
+    }
+    return "text-bg-primary";
 }
 
 // apps.js
@@ -265,7 +279,15 @@ class Apps {
                 AppContext.apps = new SelectAdvanced(items, Apps.getSelectedApp(env), {
                     componentId: 'select-app',
                     backgroundId: 'background',
-                    getItemAsString: (item) => item,
+                    getItemValue: (item) => item.id,
+                    getItemAsHtml: (item) => {
+                        let result = item.id;
+                        for (let feature of item.exclude_features) {
+                            result += `<span class="badge text-bg-danger"><s>` + feature + `</s></span>`;
+                        }
+                        console.log(result);
+                        return result;
+                    },
                     onSelect: (value) => {
                         Apps.saveSelectedApp(value);
                     }
@@ -280,35 +302,6 @@ class Apps {
         return HtmlUtils.render3Table("auto", "400px", "60px", () => {
             let renderer = `<div>App:</div><div id="select-app" class="form-select" data-value="${selectedApp}">${selectedApp}</div>`;
             return renderer;
-            /*
-            let renderer = '<span>App:</span><select id="app" class="form-select"  onchange="Apps.saveSelected()">';
-            renderer += '<option value="---">---</option>';
-            if (selectedApp == "*") {
-                renderer += '<option value="*" selected>All</option>';
-            } else {
-                renderer += '<option value="*">All</option>';
-            }
-
-
-            for (let item of AppContext.apps) {
-
-                renderer += `<optgroup label="${item.category}">`;
-
-                for (let itm of item.ids) {
-                    if (selectedApp == itm) {
-                        renderer += '<option value="' + itm + '" selected>' + itm + "</option>";
-                    } else {
-                        renderer += '<option value="' + itm + '">' + itm + "</option>";
-                    }
-                }
-
-                renderer += "</optgroup>";
-            }
-
-
-
-            return renderer + "</select>";
-            */
         }, () => {
             let items = [];
             items.push("---");

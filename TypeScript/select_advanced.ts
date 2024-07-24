@@ -8,7 +8,8 @@ interface SelectItemsGroup<T> {
 interface SelectAdvancedSettings<T> {
     componentId: string,
     backgroundId: string,
-    getItemAsString: (item: T) => string
+    getItemAsHtml: (item: T) => string
+    getItemValue: (item: T) => string;
     onSelect: (item: string) => void
 }
 
@@ -20,7 +21,8 @@ class SelectAdvanced<T> {
     items: SelectItemsGroup<T>[];
     htmlComponent: Element;
     backgroundElement: Element;
-    getItemAsString: (item: T) => string;
+    getItemAsHtml: (item: T) => string;
+    getItemValue: (item: T) => string;
     onSelect: (item: string) => void;
 
 
@@ -28,8 +30,9 @@ class SelectAdvanced<T> {
         this.items = items;
         this.htmlComponent = document.getElementById(setup.componentId);
         this.backgroundElement = document.getElementById(setup.backgroundId);
-        this.getItemAsString = setup.getItemAsString;
+        this.getItemAsHtml = setup.getItemAsHtml;
         this.onSelect = setup.onSelect;
+        this.getItemValue = setup.getItemValue;
         SelectAdvanced.enteredFilter = "";
         SelectAdvanced.current = this;
         this.selected = selected;
@@ -54,7 +57,7 @@ class SelectAdvanced<T> {
     }
 
     renderThisItem(item: T) {
-        let itemAsString = this.getItemAsString(item).toLowerCase();
+        let itemAsString = this.getItemValue(item).toLowerCase();
         //console.log("Item: " + itemAsString + ' selected: ' + SelectAdvanced.selected);
         return itemAsString.includes(SelectAdvanced.enteredFilter);
     }
@@ -118,11 +121,14 @@ class SelectAdvanced<T> {
 
                     let selectedAttr = "";
 
-                    if (this.selected == this.getItemAsString(item)) {
+                    if (this.selected == this.getItemValue(item)) {
                         selectedAttr = "select-item-selected";
                     }
 
-                    result += `<div data-value="${item}" class="select-item disable-selection ${selectedAttr}" onclick="SelectAdvanced.onClick(this)">${item}</div>`;
+                    let content = this.getItemAsHtml(item);
+                    let value = this.getItemValue(item);
+
+                    result += `<div data-value="${value}" class="select-item disable-selection ${selectedAttr}" onclick="SelectAdvanced.onClick(this)">${content}</div>`;
 
                 }
             }
@@ -132,6 +138,7 @@ class SelectAdvanced<T> {
 
     static onClick(aThis) {
         let value = aThis.getAttribute("data-value");
+
         this.current.selectItem(value);
 
     }

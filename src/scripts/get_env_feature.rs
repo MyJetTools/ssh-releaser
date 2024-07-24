@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::{app::AppContext, execution::ExecuteLogsContainer};
 
-pub async fn get_env_feature(app: &Arc<AppContext>, id: String) -> Option<String> {
+pub async fn get_env_features(app: &Arc<AppContext>, id: String) -> Option<Vec<String>> {
     let app = app.clone();
     let result = tokio::spawn(async move {
         let logs = Arc::new(ExecuteLogsContainer::new());
@@ -25,5 +25,5 @@ pub async fn get_env_feature(app: &Arc<AppContext>, id: String) -> Option<String
         return None;
     }
 
-    result.unwrap().feature
+    result.unwrap().features
 }

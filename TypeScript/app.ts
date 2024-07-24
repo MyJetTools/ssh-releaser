@@ -1,7 +1,7 @@
 
 class AppContext {
     static envs: IEnvironment[];
-    static apps: SelectAdvanced<string>;
+    static apps: SelectAdvanced<ReleaseStepHttpModel>;
     static labels: string[];
     static selectedProcess: string;
 

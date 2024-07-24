@@ -3,8 +3,9 @@ class SelectAdvanced {
         this.items = items;
         this.htmlComponent = document.getElementById(setup.componentId);
         this.backgroundElement = document.getElementById(setup.backgroundId);
-        this.getItemAsString = setup.getItemAsString;
+        this.getItemAsHtml = setup.getItemAsHtml;
         this.onSelect = setup.onSelect;
+        this.getItemValue = setup.getItemValue;
         SelectAdvanced.enteredFilter = "";
         SelectAdvanced.current = this;
         this.selected = selected;
@@ -24,7 +25,7 @@ class SelectAdvanced {
         }
     }
     renderThisItem(item) {
-        let itemAsString = this.getItemAsString(item).toLowerCase();
+        let itemAsString = this.getItemValue(item).toLowerCase();
         //console.log("Item: " + itemAsString + ' selected: ' + SelectAdvanced.selected);
         return itemAsString.includes(SelectAdvanced.enteredFilter);
     }
@@ -67,10 +68,12 @@ class SelectAdvanced {
             for (let item of group.items) {
                 if (this.renderThisItem(item)) {
                     let selectedAttr = "";
-                    if (this.selected == this.getItemAsString(item)) {
+                    if (this.selected == this.getItemValue(item)) {
                         selectedAttr = "select-item-selected";
                     }
-                    result += `<div data-value="${item}" class="select-item disable-selection ${selectedAttr}" onclick="SelectAdvanced.onClick(this)">${item}</div>`;
+                    let content = this.getItemAsHtml(item);
+                    let value = this.getItemValue(item);
+                    result += `<div data-value="${value}" class="select-item disable-selection ${selectedAttr}" onclick="SelectAdvanced.onClick(this)">${content}</div>`;
                 }
             }
         }

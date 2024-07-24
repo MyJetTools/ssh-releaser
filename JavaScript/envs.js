@@ -7,8 +7,13 @@ class Envs {
         let result = "";
         for (let itm of AppContext.envs) {
             let featureBadge = "";
-            if (itm.feature) {
-                featureBadge = '<div><span class="badge text-bg-primary">' + itm.feature + '</span></div>';
+            if (itm.features) {
+                let odd = false;
+                for (let feature of itm.features) {
+                    let badgeType = getBadgeType(odd);
+                    featureBadge += '<div><span class="badge ' + badgeType + '">' + feature + '</span></div>';
+                    odd = !odd;
+                }
             }
             if (itm.id == selected) {
                 result += `<div class="btn btn-secondary" style="width:100%">${itm.id}${featureBadge}</div>`;
@@ -28,5 +33,11 @@ class Envs {
         this.refresh();
         Apps.request(id);
     }
+}
+function getBadgeType(odd) {
+    if (odd) {
+        return "text-bg-warning";
+    }
+    return "text-bg-primary";
 }
 //# sourceMappingURL=envs.js.map

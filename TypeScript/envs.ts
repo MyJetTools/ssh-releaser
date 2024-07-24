@@ -12,8 +12,17 @@ class Envs {
 
             let featureBadge = "";
 
-            if (itm.feature) {
-                featureBadge = '<div><span class="badge text-bg-primary">' + itm.feature + '</span></div>';
+            if (itm.features) {
+
+                let odd = false;
+                for (let feature of itm.features) {
+
+                    let badgeType = getBadgeType(odd);
+                    featureBadge += '<div><span class="badge ' + badgeType + '">' + feature + '</span></div>';
+
+                    odd = !odd;
+                }
+
             }
 
             if (itm.id == selected) {
@@ -42,6 +51,18 @@ class Envs {
 
 
 
+
+function getBadgeType(odd: boolean): string {
+
+    if (odd) {
+        return "text-bg-warning";
+    }
+
+    return "text-bg-primary"
+
+
+
+}
 
 
 

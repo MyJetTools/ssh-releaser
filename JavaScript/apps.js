@@ -37,7 +37,15 @@ class Apps {
                 AppContext.apps = new SelectAdvanced(items, Apps.getSelectedApp(env), {
                     componentId: 'select-app',
                     backgroundId: 'background',
-                    getItemAsString: (item) => item,
+                    getItemValue: (item) => item.id,
+                    getItemAsHtml: (item) => {
+                        let result = item.id;
+                        for (let feature of item.exclude_features) {
+                            result += `<span class="badge text-bg-danger"><s>` + feature + `</s></span>`;
+                        }
+                        console.log(result);
+                        return result;
+                    },
                     onSelect: (value) => {
                         Apps.saveSelectedApp(value);
                     }
@@ -52,35 +60,6 @@ class Apps {
         return HtmlUtils.render3Table("auto", "400px", "60px", () => {
             let renderer = `<div>App:</div><div id="select-app" class="form-select" data-value="${selectedApp}">${selectedApp}</div>`;
             return renderer;
-            /*
-            let renderer = '<span>App:</span><select id="app" class="form-select"  onchange="Apps.saveSelected()">';
-            renderer += '<option value="---">---</option>';
-            if (selectedApp == "*") {
-                renderer += '<option value="*" selected>All</option>';
-            } else {
-                renderer += '<option value="*">All</option>';
-            }
-
-
-            for (let item of AppContext.apps) {
-
-                renderer += `<optgroup label="${item.category}">`;
-
-                for (let itm of item.ids) {
-                    if (selectedApp == itm) {
-                        renderer += '<option value="' + itm + '" selected>' + itm + "</option>";
-                    } else {
-                        renderer += '<option value="' + itm + '">' + itm + "</option>";
-                    }
-                }
-
-                renderer += "</optgroup>";
-            }
-
-
-
-            return renderer + "</select>";
-            */
         }, () => {
             let items = [];
             items.push("---");

@@ -30,7 +30,7 @@ class Apps {
             AppContext.labels = data.labels;
             header.innerHTML = this.generateHtml(env);
 
-            let items: SelectItemsGroup<string>[] = [];
+            let items: SelectItemsGroup<ReleaseStepHttpModel>[] = [];
 
             for (let item of data.ids) {
                 items.push({ name: item.category, items: item.ids });
@@ -41,7 +41,20 @@ class Apps {
                 {
                     componentId: 'select-app',
                     backgroundId: 'background',
-                    getItemAsString: (item: string) => item,
+                    getItemValue: (item: ReleaseStepHttpModel) => item.id,
+                    getItemAsHtml: (item: ReleaseStepHttpModel) => {
+                        let result = item.id;
+
+                        for (let feature of item.exclude_features) {
+                            result += `<span class="badge text-bg-danger"><s>` + feature + `</s></span>`;
+                        }
+
+
+                        console.log(result);
+
+
+                        return result;
+                    },
 
                     onSelect: (value: string) => {
                         Apps.saveSelectedApp(value)
@@ -66,35 +79,7 @@ class Apps {
             let renderer = `<div>App:</div><div id="select-app" class="form-select" data-value="${selectedApp}">${selectedApp}</div>`;
             return renderer;
 
-            /*
-            let renderer = '<span>App:</span><select id="app" class="form-select"  onchange="Apps.saveSelected()">';
-            renderer += '<option value="---">---</option>';
-            if (selectedApp == "*") {
-                renderer += '<option value="*" selected>All</option>';
-            } else {
-                renderer += '<option value="*">All</option>';
-            }
 
-
-            for (let item of AppContext.apps) {
-
-                renderer += `<optgroup label="${item.category}">`;
-
-                for (let itm of item.ids) {
-                    if (selectedApp == itm) {
-                        renderer += '<option value="' + itm + '" selected>' + itm + "</option>";
-                    } else {
-                        renderer += '<option value="' + itm + '">' + itm + "</option>";
-                    }
-                }
-
-                renderer += "</optgroup>";
-            }
-
-
-
-            return renderer + "</select>";
-            */
         },
             () => {
 

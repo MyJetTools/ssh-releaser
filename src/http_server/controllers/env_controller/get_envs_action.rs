@@ -35,9 +35,9 @@ async fn handle_request(
 
     for env in action.app.global_settings.get_envs() {
         println!("Getting feature for env: {}", env);
-        let feature = crate::scripts::get_env_feature(&action.app, env.clone()).await;
-        println!("Got feature for env: {}", env);
-        response.push(EnvironmentHttpOutput { id: env, feature });
+        let features = crate::scripts::get_env_features(&action.app, env.clone()).await;
+        println!("Got features {:?} for env: {}", features, env);
+        response.push(EnvironmentHttpOutput { id: env, features });
     }
 
     HttpOutput::as_json(response).into_ok_result(false)
@@ -46,5 +46,5 @@ async fn handle_request(
 #[derive(MyHttpObjectStructure, Serialize)]
 pub struct EnvironmentHttpOutput {
     pub id: String,
-    pub feature: Option<String>,
+    pub features: Option<Vec<String>>,
 }
