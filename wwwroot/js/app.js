@@ -282,6 +282,9 @@ class Apps {
                     getItemValue: (item) => item.id,
                     getItemAsHtml: (item) => {
                         let result = item.id;
+                        for (let feature of item.include_features) {
+                            result += `<span class="badge text-bg-success">` + feature + `</span>`;
+                        }
                         for (let feature of item.exclude_features) {
                             result += `<span class="badge text-bg-danger"><s>` + feature + `</s></span>`;
                         }

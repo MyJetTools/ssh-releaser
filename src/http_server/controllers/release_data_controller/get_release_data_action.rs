@@ -45,10 +45,13 @@ async fn handle_request(
                 ids: itm
                     .ids
                     .into_iter()
-                    .map(|(id, exclude_features)| ReleaseStepHttpModel {
-                        id,
-                        exclude_features,
-                    })
+                    .map(
+                        |(id, include_features, exclude_features)| ReleaseStepHttpModel {
+                            id,
+                            include_features,
+                            exclude_features,
+                        },
+                    )
                     .collect(),
             })
             .collect(),
@@ -78,5 +81,6 @@ pub struct IdGroupHttpModel {
 #[derive(serde::Serialize, Debug, MyHttpObjectStructure)]
 pub struct ReleaseStepHttpModel {
     pub id: String,
+    pub include_features: Vec<String>,
     pub exclude_features: Vec<String>,
 }

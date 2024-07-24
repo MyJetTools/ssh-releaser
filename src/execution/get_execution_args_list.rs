@@ -6,7 +6,7 @@ use super::ExecuteLogsContainer;
 
 pub struct IdGroup {
     pub category: String,
-    pub ids: Vec<(String, Vec<String>)>,
+    pub ids: Vec<(String, Vec<String>, Vec<String>)>,
 }
 
 pub struct ExecutionArgsList {
@@ -62,6 +62,7 @@ pub async fn get_execution_args_list(
             Some(index) => {
                 ids[index].ids.push((
                     step_model.id.clone(),
+                    step_model.features_include.clone().unwrap_or_default(),
                     step_model.features_exclude.clone().unwrap_or_default(),
                 ));
             }
@@ -73,6 +74,7 @@ pub async fn get_execution_args_list(
                         .unwrap_or(NONE_CATEGORY_NAME.to_string()),
                     ids: vec![(
                         step_model.id.clone(),
+                        step_model.features_include.clone().unwrap_or_default(),
                         step_model.features_exclude.clone().unwrap_or_default(),
                     )],
                 });

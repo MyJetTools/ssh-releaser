@@ -16,6 +16,7 @@ interface IdGroupHttpModel {
 interface ReleaseStepHttpModel {
     id: string;
     exclude_features: string[],
+    include_features: string[],
 }
 
 interface IEnvironment {
