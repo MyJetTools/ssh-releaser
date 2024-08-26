@@ -1,4 +1,5 @@
 class MyStorage {
+
     static saveSelectedByEnv(storageName: string, selectedApp: string) {
 
         let storageValue = this.getAsObject(storageName);

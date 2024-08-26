@@ -19,13 +19,14 @@ const NONE_CATEGORY_NAME: &str = "---";
 
 pub async fn get_execution_args_list(
     app: Arc<AppContext>,
+    product_code: &str,
     env: &str,
     logs: Arc<ExecuteLogsContainer>,
 ) -> ExecutionArgsList {
     let env_ctx = match app
         .clone()
         .global_settings
-        .get_env_settings(app, env, &logs)
+        .get_env_settings(app, product_code, env, &logs)
         .await
     {
         Ok(env_settings) => env_settings,

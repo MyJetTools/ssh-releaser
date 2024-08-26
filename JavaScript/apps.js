@@ -26,7 +26,8 @@ class Apps {
                 AppContext.apps.dispose();
             }
             header.innerHTML = "Loading...";
-            let data = yield $.ajax({ url: "/api/release/all", data: { env: env } });
+            let product = AppContext.getSelectedProduct();
+            let data = yield $.ajax({ url: "/api/release/all", data: { env: env, product: product } });
             if (data.ids) {
                 AppContext.labels = data.labels;
                 header.innerHTML = this.generateHtml(env);
@@ -144,6 +145,7 @@ class Apps {
         let data = {};
         data["env"] = env;
         data["arg"] = arg;
+        data["product"] = AppContext.getSelectedProduct();
         $.ajax({ method: "POST", url: "/api/release/execute", data: data }).then(function (result) {
             console.log(result);
             AppContext.selectedProcess = result;

@@ -8,13 +8,14 @@ use crate::{
 
 pub async fn execute(
     app: Arc<AppContext>,
+    product_code: &str,
     env: String,
     args: String,
     logs: Arc<ExecuteLogsContainer>,
 ) -> Result<(), ExecuteCommandError> {
     let mut env_ctx = app
         .global_settings
-        .get_env_settings(app.clone(), &env, &logs)
+        .get_env_settings(app.clone(), product_code, &env, &logs)
         .await?;
 
     for step in env_ctx.get_execution_steps() {

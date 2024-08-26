@@ -14,65 +14,51 @@ use super::{HomeSettingsModel, RemoteCommand};
 #[derive(my_settings_reader::SettingsModel, Debug, Clone, Serialize, Deserialize)]
 pub struct GlobalSettingsModel {
     //working_dir: String,
-    envs: BTreeMap<String, String>, // Script step would use this director as home directory which is going to be resolved by ~ symbol
+    envs: BTreeMap<String, BTreeMap<String, String>>, // Script step would use this director as home directory which is going to be resolved by ~ symbol
 }
 
 impl GlobalSettingsModel {
-    pub fn get_envs(&self) -> Vec<String> {
-        self.envs.keys().map(|x| x.to_string()).collect()
-    }
-    /*
-    pub async fn read_working_settings(&self) -> HomeSettingsModel {
-        let file_name = self.get_global_settings_file_name();
-        println!("Reading global vars from file: {}", file_name.as_str());
-        let content = tokio::fs::read(file_name.as_str()).await;
+    pub fn get_envs(&self) -> BTreeMap<String, Vec<String>> {
+        let mut result = BTreeMap::new();
 
-        if let Err(err) = &content {
-            panic!(
-                "Can not read global vars from file {}. Err: {}",
-                file_name.as_str(),
-                err
-            )
+        for (product_code, envs) in &self.envs {
+            result.insert(
+                product_code.to_string(),
+                envs.keys().map(|x| x.to_string()).collect(),
+            );
         }
 
-        serde_yaml::from_slice(content.as_ref().unwrap()).unwrap()
+        result
     }
 
-
-    pub fn post_process(&mut self) {
-        let mut result = HashMap::new();
-
-        for (key, value) in &self.envs {
-            result.insert(key.to_string(), value);
-        }
-
-        self.envs.clear();
-
-        for (key, value) in result {
-            self.envs.insert(key, value);
-        }
-    }
-     */
     pub async fn get_env_settings(
         &self,
         app: Arc<AppContext>,
+        product_code: &str,
         env: &str,
         logs: &Arc<ExecuteLogsContainer>,
     ) -> Result<EnvContext, ExecuteCommandError> {
-        let home_dir = match self.envs.get(env) {
-            Some(home_dir) => home_dir,
-            None => panic!("There is not environment {} in global settings", env),
-        };
+        if let Some(envs) = self.envs.get(product_code) {
+            let home_dir = match envs.get(env) {
+                Some(home_dir) => home_dir,
+                None => panic!("There is not environment {} in global settings", env),
+            };
 
-        let home_dir = if home_dir.starts_with("~") {
-            home_dir.replace("~", std::env::var("HOME").unwrap().as_str())
-        } else {
-            home_dir.clone()
-        };
+            let home_dir = if home_dir.starts_with("~") {
+                home_dir.replace("~", std::env::var("HOME").unwrap().as_str())
+            } else {
+                home_dir.clone()
+            };
 
-        let home_settings = load_home_settings(home_dir.as_str()).await;
+            let home_settings = load_home_settings(home_dir.as_str()).await;
 
-        EnvContext::new(app, home_dir, home_settings, logs).await
+            return EnvContext::new(app.clone(), home_dir, home_settings, logs).await;
+        }
+
+        panic!(
+            "There is not product code {} in global settings",
+            product_code
+        );
     }
 
     /*

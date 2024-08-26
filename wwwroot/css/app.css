@@ -4,6 +4,7 @@ body {
     --app-width: 100vw;
     --left-panel-width: 200px;
     --header-height: 64px;
+    --product-select-height: 40px;
 }
 
 #main {
@@ -20,6 +21,15 @@ body {
     left: 0;
     top: 0;
     box-shadow: 0 0 3px lightgray;
+}
+
+#product-select-panel {
+    height: var(--product-select-height);
+}
+
+#env-select-panel {
+    overflow-y: auto;
+    height: calc(var(--app-height) - var(--product-select-height));
 }
 
 #headers {

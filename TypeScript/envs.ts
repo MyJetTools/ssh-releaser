@@ -2,13 +2,16 @@
 class Envs {
     static refresh() {
         let html = this.render(this.getSelected());
-        document.getElementById("left-panel").innerHTML = html;
+        document.getElementById("env-select-panel").innerHTML = html;
     }
 
     static render(selected: string): string {
+
         let result = "";
 
-        for (let itm of AppContext.envs) {
+        let selectedProduct = AppContext.getSelectedProduct();
+
+        for (let itm of AppContext.getEnvs(selectedProduct)) {
 
             let featureBadge = "";
 
@@ -46,21 +49,18 @@ class Envs {
         this.refresh();
         Apps.request(id);
     }
+
+
+
 }
 
 
-
-
-
 function getBadgeType(odd: boolean): string {
-
     if (odd) {
         return "text-bg-warning";
     }
 
     return "text-bg-primary"
-
-
 
 }
 

@@ -4,10 +4,33 @@ class AppContext {
         background.classList.remove("visible");
         background.classList.add("hidden");
     }
+    static getProducts() {
+        return Object.keys(this.envs);
+    }
+    static getEnvs(product) {
+        return this.envs[product];
+    }
+    static getSelectedProduct() {
+        let result = localStorage.getItem("selectedProduct");
+        if (!result) {
+            result = this.getProducts()[0];
+            localStorage.setItem("selectedProduct", result);
+        }
+        return result;
+    }
+    static onProductSelect(itm) {
+        let value = itm.value;
+        console.log(value);
+        localStorage.setItem("selectedProduct", value);
+        Envs.refresh();
+    }
 }
 setTimeout(function () {
     $.ajax({ url: "/api/env/list" }).then(function (data) {
         AppContext.envs = data;
+        let products = AppContext.getProducts();
+        let productsSelect = HtmlHelpers.renderProducts(products);
+        document.getElementById("product-select-panel").innerHTML = productsSelect;
         Envs.refresh();
         Apps.init();
     });

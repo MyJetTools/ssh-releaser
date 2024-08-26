@@ -43,6 +43,7 @@ async fn handle_request(
         let result = tokio::spawn(async move {
             match crate::execution::execute(
                 app,
+                &input_data.product.as_str(),
                 input_data.env,
                 input_data.arg,
                 logs_spawned_squared.clone(),
@@ -69,6 +70,9 @@ async fn handle_request(
 
 #[derive(MyHttpInput)]
 pub struct ExecuteInputData {
+    #[http_form_data(description = "Product")]
+    pub product: String,
+
     #[http_form_data(description = "Environment")]
     pub env: String,
 

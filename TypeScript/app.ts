@@ -1,6 +1,6 @@
 
 class AppContext {
-    static envs: IEnvironment[];
+    static envs: {}; //todo!("Check how we are reading from here")
     static apps: SelectAdvanced<ReleaseStepHttpModel>;
     static labels: string[];
     static selectedProcess: string;
@@ -11,12 +11,45 @@ class AppContext {
         background.classList.add("hidden");
 
     }
+
+    static getProducts(): string[] {
+        return Object.keys(this.envs);
+    }
+
+
+    static getEnvs(product: string): IEnvironment[] {
+        return this.envs[product];
+    }
+
+
+    static getSelectedProduct(): string {
+
+        let result = localStorage.getItem("selectedProduct");
+
+        if (!result) {
+            result = this.getProducts()[0];
+            localStorage.setItem("selectedProduct", result);
+        }
+
+        return result;
+    }
+
+
+    static onProductSelect(itm: HTMLInputElement) {
+        let value = itm.value;
+        console.log(value);
+        localStorage.setItem("selectedProduct", value);
+        Envs.refresh();
+    }
 }
 
 
 setTimeout(function () {
     $.ajax({ url: "/api/env/list" }).then(function (data) {
         AppContext.envs = data;
+        let products = AppContext.getProducts();
+        let productsSelect = HtmlHelpers.renderProducts(products);
+        document.getElementById("product-select-panel").innerHTML = productsSelect;
         Envs.refresh();
         Apps.init();
     });

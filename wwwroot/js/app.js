@@ -138,6 +138,19 @@ class HtmlHelpers {
         }
         return renderer + "</select>";
     }
+    static renderProducts(products) {
+        let selectedProduct = AppContext.getSelectedProduct();
+        let result = `<select class="form-select" style="width:100%" onchange="AppContext.onProductSelect(this)">`;
+        for (let product of products) {
+            if (product == selectedProduct) {
+                result += `<option selected>${product}</option>`;
+            }
+            else {
+                result += `<option>${product}</option>`;
+            }
+        }
+        return result + `</select>`;
+    }
 }
 
 // storage.js
@@ -169,10 +182,33 @@ class AppContext {
         background.classList.remove("visible");
         background.classList.add("hidden");
     }
+    static getProducts() {
+        return Object.keys(this.envs);
+    }
+    static getEnvs(product) {
+        return this.envs[product];
+    }
+    static getSelectedProduct() {
+        let result = localStorage.getItem("selectedProduct");
+        if (!result) {
+            result = this.getProducts()[0];
+            localStorage.setItem("selectedProduct", result);
+        }
+        return result;
+    }
+    static onProductSelect(itm) {
+        let value = itm.value;
+        console.log(value);
+        localStorage.setItem("selectedProduct", value);
+        Envs.refresh();
+    }
 }
 setTimeout(function () {
     $.ajax({ url: "/api/env/list" }).then(function (data) {
         AppContext.envs = data;
+        let products = AppContext.getProducts();
+        let productsSelect = HtmlHelpers.renderProducts(products);
+        document.getElementById("product-select-panel").innerHTML = productsSelect;
         Envs.refresh();
         Apps.init();
     });
@@ -199,11 +235,12 @@ function backgroundClick() {
 class Envs {
     static refresh() {
         let html = this.render(this.getSelected());
-        document.getElementById("left-panel").innerHTML = html;
+        document.getElementById("env-select-panel").innerHTML = html;
     }
     static render(selected) {
         let result = "";
-        for (let itm of AppContext.envs) {
+        let selectedProduct = AppContext.getSelectedProduct();
+        for (let itm of AppContext.getEnvs(selectedProduct)) {
             let featureBadge = "";
             if (itm.features) {
                 let odd = false;
@@ -268,7 +305,8 @@ class Apps {
                 AppContext.apps.dispose();
             }
             header.innerHTML = "Loading...";
-            let data = yield $.ajax({ url: "/api/release/all", data: { env: env } });
+            let product = AppContext.getSelectedProduct();
+            let data = yield $.ajax({ url: "/api/release/all", data: { env: env, product: product } });
             if (data.ids) {
                 AppContext.labels = data.labels;
                 header.innerHTML = this.generateHtml(env);
@@ -386,6 +424,7 @@ class Apps {
         let data = {};
         data["env"] = env;
         data["arg"] = arg;
+        data["product"] = AppContext.getSelectedProduct();
         $.ajax({ method: "POST", url: "/api/release/execute", data: data }).then(function (result) {
             console.log(result);
             AppContext.selectedProcess = result;

@@ -1,11 +1,12 @@
 class Envs {
     static refresh() {
         let html = this.render(this.getSelected());
-        document.getElementById("left-panel").innerHTML = html;
+        document.getElementById("env-select-panel").innerHTML = html;
     }
     static render(selected) {
         let result = "";
-        for (let itm of AppContext.envs) {
+        let selectedProduct = AppContext.getSelectedProduct();
+        for (let itm of AppContext.getEnvs(selectedProduct)) {
             let featureBadge = "";
             if (itm.features) {
                 let odd = false;

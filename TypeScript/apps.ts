@@ -22,7 +22,9 @@ class Apps {
 
         header.innerHTML = "Loading...";
 
-        let data: ReleaseAppsHttpModel = await $.ajax({ url: "/api/release/all", data: { env: env } });
+        let product = AppContext.getSelectedProduct();
+
+        let data: ReleaseAppsHttpModel = await $.ajax({ url: "/api/release/all", data: { env: env, product: product } });
 
 
         if (data.ids) {
@@ -221,6 +223,7 @@ class Apps {
 
         data["env"] = env;
         data["arg"] = arg;
+        data["product"] = AppContext.getSelectedProduct();
 
         $.ajax({ method: "POST", url: "/api/release/execute", data: data }).then(function (result) {
             console.log(result);
