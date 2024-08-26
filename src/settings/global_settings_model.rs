@@ -91,7 +91,15 @@ async fn load_home_settings(home_dir: &str) -> HomeSettingsModel {
         Err(err) => panic!("Can not read file {}. Err: {}", file_name, err),
     };
 
-    let mut result: HomeSettingsModel = serde_yaml::from_slice(content.as_ref()).unwrap();
+    println!("Loaded home settings from file: {}", file_name.as_str());
+
+    let result: Result<HomeSettingsModel, _> = serde_yaml::from_slice(content.as_ref());
+
+    if let Err(err) = &result {
+        panic!("Can not parse file {}. Err: {}", file_name, err);
+    }
+
+    let mut result = result.unwrap();
 
     result.post_process();
 

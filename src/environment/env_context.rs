@@ -42,6 +42,8 @@ impl EnvContext {
 
         let file_name = home_settings.get_release_yaml_file_name();
 
+        println!("Loading release settings from file: {}", file_name.as_str());
+
         let release_settings = ReleaseSettingsModel::load(file_name).await?;
 
         let vars_from_files = release_settings
