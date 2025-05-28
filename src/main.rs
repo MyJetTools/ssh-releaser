@@ -21,7 +21,7 @@ mod settings;
 async fn main() {
     flurl::my_tls::install_default_crypto_providers();
 
-    let my_settings = GlobalSettingsModel::read_from_file(".ssh-releaser".to_string())
+    let my_settings = GlobalSettingsModel::read_from_file("~/.ssh-releaser".to_string())
         .await
         .unwrap();
 
