@@ -27,9 +27,14 @@ pub async fn execute_post_request(
 
     //    println!("Content: {}", content);
 
+    let content_type = detect_content_type(content.as_bytes());
+
+    println!("Content type: {}", content_type);
+
     let mut fl_url_response = flurl::FlUrl::new(url.as_str())
         .set_ssh_credentials(ssh_credentials)
-        .with_header("content-type", "x-www-form-urlencoded")
+        .do_not_reuse_connection()
+        .with_header("content-type", content_type)
         .post(Some(content.into_bytes()))
         .await
         .unwrap();
@@ -80,4 +85,21 @@ async fn get_body(
             .to_string()
             .into(),
     )
+}
+
+fn detect_content_type(body: &[u8]) -> &'static str {
+    for b in body {
+        let b = *b;
+        if b <= 32 {
+            continue;
+        }
+
+        if b == b'[' || b == b'{' {
+            return "application/json";
+        }
+
+        break;
+    }
+
+    "x-www-form-urlencoded"
 }
