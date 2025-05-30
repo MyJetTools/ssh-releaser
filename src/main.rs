@@ -12,7 +12,7 @@ mod caching;
 mod execution;
 mod file_name;
 mod file_path;
-mod http_over_ssh;
+//mod http_over_ssh;
 mod http_server;
 mod scripts;
 mod settings;

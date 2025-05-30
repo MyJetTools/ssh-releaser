@@ -1,10 +1,7 @@
-use std::{str::FromStr, sync::Arc};
-
-use hyper::Uri;
+use std::sync::Arc;
 
 use crate::{
     environment::EnvContext,
-    http_over_ssh::Http1Client,
     scripts,
     settings::{PostDataModel, ScriptModel},
 };
@@ -24,21 +21,29 @@ pub async fn execute_post_request(
         scripts::populate_variables(env_settings, Some(script), post_request.url.as_str(), logs)
             .await?;
 
-    let remote_uri = Uri::from_str(url.as_str()).unwrap();
-
     let content = get_body(env_settings, script, &post_request, logs).await?;
+
+    println!("Post body: {}", content);
 
     //    println!("Content: {}", content);
 
-    let http_client = Http1Client::connect(&ssh_credentials, &remote_uri, logs).await?;
+    let mut fl_url_response = flurl::FlUrl::new(url.as_str())
+        .set_ssh_credentials(ssh_credentials)
+        .with_header("content-type", "x-www-form-urlencoded")
+        .post(Some(content.into_bytes()))
+        .await
+        .unwrap();
 
-    let (status_code, text) = http_client
-        .post(remote_uri, content.into_bytes(), &post_request.headers)
-        .await?;
-
-    logs.write_log(format!("Status code: {}", status_code))
-        .await;
-    logs.write_log(format!("text: {}", text)).await;
+    logs.write_log(format!(
+        "Status code: {}",
+        fl_url_response.get_status_code()
+    ))
+    .await;
+    logs.write_log(format!(
+        "text: {}",
+        fl_url_response.body_as_str().await.unwrap()
+    ))
+    .await;
 
     Ok(())
 }

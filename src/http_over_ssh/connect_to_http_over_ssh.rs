@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
 use bytes::Bytes;
+use flurl::my_ssh::{SshCredentials, SshSession};
 use http_body_util::Full;
 use hyper::{client::conn::http1::SendRequest, Uri};
 use hyper_util::rt::TokioIo;
-use my_ssh::{SshCredentials, SshSession};
 
 use crate::execution::ExecuteLogsContainer;
 

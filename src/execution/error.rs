@@ -6,8 +6,7 @@ use rust_extensions::StrOrString;
 pub enum ExecuteCommandError {
     JustError(String),
     CloudFlareError(CloudFlareError),
-    HttpOverSshClientError(crate::http_over_ssh::HttpClientError),
-    SshSessionError(my_ssh::SshSessionError),
+    SshSessionError(flurl::my_ssh::SshSessionError),
     FlUrlError(FlUrlError),
     IoError(std::io::Error),
 }
@@ -30,8 +29,8 @@ impl From<FlUrlError> for ExecuteCommandError {
     }
 }
 
-impl From<my_ssh::SshSessionError> for ExecuteCommandError {
-    fn from(error: my_ssh::SshSessionError) -> Self {
+impl From<flurl::my_ssh::SshSessionError> for ExecuteCommandError {
+    fn from(error: flurl::my_ssh::SshSessionError) -> Self {
         ExecuteCommandError::SshSessionError(error)
     }
 }
@@ -42,12 +41,6 @@ impl Into<StrOrString<'static>> for ExecuteCommandError {
             ExecuteCommandError::JustError(error) => error.into(),
             _ => format!("{:?}", self).into(),
         }
-    }
-}
-
-impl From<crate::http_over_ssh::HttpClientError> for ExecuteCommandError {
-    fn from(error: crate::http_over_ssh::HttpClientError) -> Self {
-        ExecuteCommandError::HttpOverSshClientError(error)
     }
 }
 

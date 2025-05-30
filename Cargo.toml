@@ -17,7 +17,6 @@ async-trait = "*"
 serde = { version = "*", features = ["derive"] }
 
 my-settings-reader = { tag = "0.4.1", git = "https://github.com/MyJetTools/my-settings-reader.git" }
-my-ssh = { path = "../my-jet-tools/my-ssh" }
 
 rust-extensions = { tag = "0.1.5", git = "https://github.com/MyJetTools/rust-extensions.git", features = [
     "placeholders",
@@ -33,7 +32,9 @@ hyper-util = { version = "*", features = ["tokio", "server", "http1", "http2"] }
 http-body-util = "*"
 bytes = "*"
 
-flurl = { tag = "0.6.1", git = "https://github.com/MyJetTools/fl-url.git" }
+flurl = { tag = "0.6.1", git = "https://github.com/MyJetTools/fl-url.git", features = [
+    "with-ssh",
+] }
 
 cloudflare-sdk = { tag = "0.1.0", git = "https://github.com/MyJetTools/cloudflare-sdk.git" }
 

@@ -1,10 +1,7 @@
-use std::{str::FromStr, sync::Arc};
-
-use hyper::Uri;
+use std::sync::Arc;
 
 use crate::{
     environment::EnvContext,
-    http_over_ssh::Http1Client,
     scripts,
     settings::{GetDataModel, ScriptModel},
 };
@@ -24,17 +21,30 @@ pub async fn execute_get_request(
         scripts::populate_variables(env_settings, Some(script), get_request.url.as_str(), logs)
             .await?;
 
-    let remote_uri = Uri::from_str(url.as_str()).unwrap();
+    //    let remote_uri = Uri::from_str(url.as_str()).unwrap();
 
     //    println!("Content: {}", content);
 
-    let http_client = Http1Client::connect(&ssh_credentials, &remote_uri, logs).await?;
+    let mut fl_url_response = flurl::FlUrl::new(url.as_str())
+        .set_ssh_credentials(ssh_credentials)
+        .get()
+        .await
+        .unwrap();
 
-    let (status_code, text) = http_client.get(remote_uri, &get_request.headers).await?;
+    //let http_client = Http1Client::connect(&ssh_credentials, &remote_uri, logs).await?;
 
-    logs.write_log(format!("Status code: {}", status_code))
-        .await;
-    logs.write_log(format!("text: {}", text)).await;
+    //let (status_code, text) = http_client.get(remote_uri, &get_request.headers).await?;
+
+    logs.write_log(format!(
+        "Status code: {}",
+        fl_url_response.get_status_code()
+    ))
+    .await;
+    logs.write_log(format!(
+        "text: {}",
+        fl_url_response.body_as_str().await.unwrap()
+    ))
+    .await;
 
     Ok(())
 }
