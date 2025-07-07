@@ -42,7 +42,7 @@ pub async fn execute_get_request(
     .await;
     logs.write_log(format!(
         "text: {}",
-        fl_url_response.body_as_str().await.unwrap()
+        fl_url_response.get_body_as_str().await.unwrap()
     ))
     .await;
 

@@ -35,6 +35,7 @@ pub async fn execute_post_request(
         .set_ssh_credentials(ssh_credentials)
         .do_not_reuse_connection()
         .with_header("content-type", content_type)
+        .update_mode(flurl::FlUrlMode::Http1Hyper)
         .post(Some(content.into_bytes()))
         .await
         .unwrap();
@@ -46,7 +47,7 @@ pub async fn execute_post_request(
     .await;
     logs.write_log(format!(
         "text: {}",
-        fl_url_response.body_as_str().await.unwrap()
+        fl_url_response.get_body_as_str().await.unwrap()
     ))
     .await;
 
