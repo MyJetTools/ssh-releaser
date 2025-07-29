@@ -22,14 +22,14 @@ pub async fn populate_variables<'s>(
     }
     let mut result = String::new();
 
-    for token in rust_extensions::placeholders::PlaceholdersIterator::new(
+    for token in rust_common::placeholders::PlaceholdersIterator::new(
         src,
         PLACEHOLDER_OPEN_TOKEN,
         PLACEHOLDER_CLOSE_TOKEN,
     ) {
         match token {
-            rust_extensions::placeholders::ContentToken::Text(text) => result.push_str(text),
-            rust_extensions::placeholders::ContentToken::Placeholder(placeholder) => {
+            rust_common::placeholders::ContentToken::Text(text) => result.push_str(text),
+            rust_common::placeholders::ContentToken::Placeholder(placeholder) => {
                 let (placeholder_to_process, processing) = match placeholder.find(":") {
                     Some(index) => {
                         let placeholder_to_process = &placeholder[..index];
